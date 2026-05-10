@@ -1,0 +1,45 @@
+{
+  "page": {
+    "title": "Discover Your Vibe",
+    "subtitle": "Explore places shared by people with the same energy ✨",
+    "searchPlaceholder": "Search by place, vibe, or tag..."
+  },
+  "trending": {
+    "sectionTitle": "🔥 Trending Now",
+    "periods": {
+      "day": "Today",
+      "week": "This Week",
+      "month": "This Month"
+    }
+  },
+  "feed": {
+    "sortRecent": "🕐 Recent",
+    "sortPopular": "🔥 Popular",
+    "resultsCount": "{count} {count, plural, one {place} other {places}} found"
+  },
+  "empty": {
+    "filteredTitle": "No spots match this vibe",
+    "filteredSubtitle": "Try a different mood or clear your filters to explore more.",
+    "defaultTitle": "Nothing here yet",
+    "defaultSubtitle": "Be the first to share a spot with the community.",
+    "clearFilters": "Clear Filters"
+  },
+  "error": {
+    "message": "Something went wrong loading spots. Please try again.",
+    "retry": "Try Again"
+  },
+  "card": {
+    "likes": "Likes",
+    "views": "Views"
+  },
+  "moodPills": {
+    "all": "✨ All Vibes",
+    "calm": "😌 Calm",
+    "happy": "😄 Happy",
+    "chill": "🧘 Chill",
+    "excited": "🔥 Excited",
+    "energetic": "⚡ Energetic",
+    "romantic": "💕 Romantic",
+    "sad": "😢 Sad"
+  }
+}

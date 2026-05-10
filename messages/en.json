@@ -1,0 +1,70 @@
+{
+  "app": {
+    "name": "MoodMap",
+    "tagline": "Find Places That Match Your Mood",
+    "description": "AI-powered location discovery based on your current mood."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "map": "Map",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "mood": {
+    "input_placeholder": "How are you feeling right now?",
+    "match_button": "Match My Mood",
+    "thinking": "Finding your perfect spot...",
+    "no_results": "No matches found. Try describing your mood differently.",
+    "categories": {
+      "calm": "Calm",
+      "sad": "Sad",
+      "happy": "Happy",
+      "romantic": "Romantic",
+      "energetic": "Energetic",
+      "chill": "Chill",
+      "excited": "Excited"
+    }
+  },
+  "location": {
+    "create_title": "Add a New Spot",
+    "edit_title": "Edit Spot",
+    "name_label": "Name",
+    "description_label": "Description",
+    "tags_label": "Tags",
+    "visibility_label": "Visibility",
+    "public": "Public",
+    "private": "Private",
+    "delete_confirm": "Are you sure you want to delete this spot?",
+    "empty_state": "No spots yet. Add your first one!",
+    "auto_tag_suggestions": "AI Suggested Tags"
+  },
+  "auth": {
+    "sign_in": "Sign In",
+    "sign_up": "Sign Up",
+    "sign_out": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "forgot_password": "Forgot Password?",
+    "welcome_back": "Welcome Back",
+    "create_account": "Create Account"
+  }
+}

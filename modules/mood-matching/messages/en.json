@@ -1,0 +1,46 @@
+{
+  "MoodMatch": {
+    "hero": {
+      "title": "Match My Mood",
+      "subtitle": "Tell us how you're feeling — our AI finds the perfect spot for your vibe"
+    },
+    "input": {
+      "textMode": "✏️ Text",
+      "emojiMode": "😊 Emoji",
+      "textPlaceholderDefault": "I want something cozy and quiet…",
+      "textAriaLabel": "Describe your current mood",
+      "submit": "✨ Match My Mood",
+      "submitting": "Reading your vibe",
+      "charCount": "{count}/{max}",
+      "emojiSelectionCount": "{selected} of {max} emoji selected"
+    },
+    "results": {
+      "title": "{count} spot for your {mood} mood",
+      "titlePlural": "{count} spots for your {mood} mood",
+      "newSearch": "🔄 New Search",
+      "viewOnMap": "📍 View on Map",
+      "whyThisSpot": "Why this spot?",
+      "bestMatch": "⭐ Best Match",
+      "fromFallback": "⚡ Quick Match",
+      "fromCache": "⚡ Cached",
+      "vibeDetected": "Vibe detected: {mood}",
+      "empty": {
+        "title": "No spots found for this vibe",
+        "subtitle": "Try describing it differently!",
+        "cta": "Try Again"
+      }
+    },
+    "thinking": {
+      "title": "Reading your vibe…",
+      "subtitle": "Our AI is finding spots that match exactly how you feel right now"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "cta": "Try Again"
+    },
+    "rateLimited": {
+      "title": "Slow down, speed racer!",
+      "cta": "Got it 👍"
+    }
+  }
+}

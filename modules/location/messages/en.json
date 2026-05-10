@@ -1,0 +1,44 @@
+{
+  "list": {
+    "title": "My Spots",
+    "add_button": "Add Spot",
+    "empty_icon": "📍",
+    "empty_message": "No spots yet. Add your first one!",
+    "loading": "Loading spots...",
+    "error": "Failed to load spots. Please try again."
+  },
+  "form": {
+    "create_title": "Add a New Spot",
+    "edit_title": "Edit Spot",
+    "name_label": "Name",
+    "name_placeholder": "Give this spot a name",
+    "description_label": "Description",
+    "description_placeholder": "What makes this place special?",
+    "mood_label": "Mood",
+    "mood_placeholder": "Select a mood...",
+    "tags_label": "Tags",
+    "tags_placeholder": "Add tags (press Enter)",
+    "coordinates_label": "Coordinates",
+    "lat_placeholder": "Latitude",
+    "lng_placeholder": "Longitude",
+    "visibility_label": "Make Public",
+    "submit_create": "Add Spot",
+    "submit_update": "Update Spot",
+    "submitting": "Saving..."
+  },
+  "card": {
+    "public_badge": "Public",
+    "view_label": "View {name}"
+  },
+  "detail": {
+    "title": "Spot Details",
+    "edit_button": "Edit",
+    "delete_button": "Delete",
+    "delete_confirm": "Are you sure you want to delete this spot?",
+    "back": "Back to Spots"
+  },
+  "tags": {
+    "ai_label": "AI Suggested Tags",
+    "manual_label": "Your Tags"
+  }
+}

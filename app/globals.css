@@ -1,0 +1,185 @@
+/* ============================================================
+ * MoodMap — Global Styles & Tailwind CSS v4 Theme
+ * Source of truth: rules/design.md §2, §3, §4, §15
+ * ============================================================ */
+
+@import 'tailwindcss';
+
+/* ---- Tailwind v4 Theme Tokens ---- */
+@theme {
+  /* Primary — Electric Blue ⚡ */
+  --color-primary: #007bff;
+  --color-primary-dark: #005fcc;
+  --color-primary-light: #339cff;
+  --color-primary-glow: #66b2ff;
+
+  /* Backgrounds & Surfaces */
+  --color-background: #0a0f1c;
+  --color-surface: #111827;
+  --color-surface-glass: rgba(30, 41, 59, 0.55);
+  --color-surface-elevated: #1a2332;
+  --color-border-default: #1f2937;
+  --color-border-glass: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-tertiary: #6b7280;
+  --color-text-disabled: #4b5563;
+
+  /* Mood Accents */
+  --color-mood-calm: #38bdf8;
+  --color-mood-sad: #64748b;
+  --color-mood-happy: #facc15;
+  --color-mood-romantic: #fb7185;
+  --color-mood-energetic: #22c55e;
+  --color-mood-chill: #a78bfa;
+  --color-mood-excited: #fb923c;
+
+  /* Border Radius — override Tailwind defaults */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+
+  /* Blur */
+  --blur-glass: 16px;
+  --blur-glass-heavy: 24px;
+
+  /* Typography */
+  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+
+  /* Shadows */
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 4px 20px rgba(0, 123, 255, 0.4);
+
+  /* Transitions */
+  --transition-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Animation */
+  --animate-skeleton-shimmer: skeleton-shimmer 1.5s ease-in-out infinite;
+  --animate-aurora-shift: aurora-shift 20s ease-in-out infinite alternate;
+}
+
+/* ---- Global Body ---- */
+html {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Typography Scale (fluid) ---- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+}
+h2 {
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+h3 {
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* ---- Reduced Motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Scrollbar (Dark) ---- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* ---- Keyframes ---- */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes aurora-shift {
+  0% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes pinDrop {
+  0% {
+    transform: translateY(-20px) scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(4px) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes markerEntrance {
+  0% {
+    transform: translateY(-16px) scale(0.5);
+    opacity: 0;
+  }
+  65% {
+    transform: translateY(3px) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}

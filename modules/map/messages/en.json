@@ -1,0 +1,24 @@
+{
+  "page": {
+    "ariaLabel": "Map view",
+    "loading": "Loading map…"
+  },
+  "controls": {
+    "locateMe": "Use my location",
+    "toggleHeatmap": "Toggle heatmap",
+    "toggle3D": "Toggle 3D mode"
+  },
+  "locationCard": {
+    "viewDetails": "View Details →",
+    "dismiss": "Close location card"
+  },
+  "fallback": {
+    "banner": "🗺️ Map view is currently unavailable. Showing locations as a list instead.",
+    "empty": "No locations to display."
+  },
+  "errors": {
+    "locationDenied": "Location access was denied. Please allow location in your browser settings.",
+    "locationUnavailable": "Could not determine your location. Please try again.",
+    "locationUnsupported": "Geolocation is not supported by this browser."
+  }
+}
