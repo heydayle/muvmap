@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PublicLocation } from '../../core/models/publicLocation';
+import { PublicLocation } from '../../../core/models/publicLocation';
 import { cn } from '@/shared/utils/cn';
 import { ensureSession } from '@/shared/utils/ensureSession';
 
@@ -33,7 +33,7 @@ const cardVariants = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 200, damping: 25, delay: i * 0.05 },
+    transition: { type: 'spring' as const, stiffness: 200, damping: 25, delay: i * 0.05 },
   }),
 };
 
@@ -80,7 +80,7 @@ export default function PublicLocationCard({
     // Optimistic update
     const wasLiked = liked;
     setLiked(!wasLiked);
-    setLikeCount((c) => c + (wasLiked ? -1 : 1));
+    setLikeCount((c: number) => c + (wasLiked ? -1 : 1));
     setLiking(true);
 
     try {
@@ -97,7 +97,7 @@ export default function PublicLocationCard({
     } catch {
       // Revert on failure
       setLiked(wasLiked);
-      setLikeCount((c) => c + (wasLiked ? 1 : -1));
+      setLikeCount((c: number) => c + (wasLiked ? 1 : -1));
     } finally {
       setLiking(false);
     }

@@ -625,7 +625,7 @@ export default function SelectedLocationCard({
 
                 {/* ── Review UI ──────────────────────────────────────────── */}
                 <AnimatePresence mode="wait">
-                  {reviewState === 'open' && (
+                  {(reviewState === 'open' || reviewState === 'submitting') && (
                     <motion.form
                       key="review-form"
                       initial={{ opacity: 0, height: 0 }}

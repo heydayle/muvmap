@@ -98,41 +98,35 @@ export async function GET(request: NextRequest) {
       const supabase = await createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      // ── 1. Build base location query ──────────────────────────────────────
-      const buildQuery = () => {
-        let q = supabase
-          .from('locations')
-          .select('id, name, creator_note, image_url, latitude, longitude, is_public, mood_category, tags, created_at, updated_at, user_id')
-          .eq('is_public', true);
+      const DATA_COLS = 'id, name, creator_note, image_url, latitude, longitude, is_public, mood_category, tags, created_at, updated_at, user_id';
 
+      // ── Helper: apply mood + tag filters to any already-selected query ────
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const withFilters = (q: any) => {
         if (mood !== 'all') q = q.eq('mood_category', mood as MoodCategory);
-
-        // AND filter for each tag (comma-string contains match)
-        for (const tag of filterTags) {
-          q = q.ilike('tags', `%${tag}%`);
-        }
-
+        for (const tag of filterTags) q = q.ilike('tags', `%${tag}%`);
         return q;
       };
 
-      // ── 2. Total count (always needed for hasMore) ────────────────────────
-      const countQuery = buildQuery();
-      const { count: totalCount } = await (countQuery as ReturnType<typeof buildQuery>)
-        .select('id', { count: 'exact', head: true });
-
-      const total = totalCount ?? 0;
+      // ── 2. Total count ────────────────────────────────────────────────────
+      const countBase = supabase
+        .from('locations')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_public', true);
+      const { count: totalCount } = await withFilters(countBase);
+      const total = (totalCount as number | null) ?? 0;
 
       // ── 3. Fetch locations (strategy depends on sortOrder) ────────────────
       let locationRows: Array<Record<string, unknown>> = [];
 
       if (sortOrder === 'popular') {
-        // Fetch all matching (capped at 200), sort by like_count in JS after merge
-        const { data, error } = await buildQuery().limit(200);
+        const dataBase = supabase.from('locations').select(DATA_COLS).eq('is_public', true);
+        const { data, error } = await withFilters(dataBase).limit(200);
         if (error) throw error;
         locationRows = (data ?? []) as Array<Record<string, unknown>>;
       } else {
-        // Recent: paginate at DB level
-        const { data, error } = await buildQuery()
+        const dataBase = supabase.from('locations').select(DATA_COLS).eq('is_public', true);
+        const { data, error } = await withFilters(dataBase)
           .order('created_at', { ascending: false })
           .range(page * limit, page * limit + limit - 1);
         if (error) throw error;

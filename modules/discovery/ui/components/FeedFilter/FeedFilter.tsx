@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FeedFilter, FeedSortOrder } from '../../core/models/feed';
+import { FeedFilter, FeedSortOrder } from '../../../core/models/feed';
 import { cn } from '@/shared/utils/cn';
 
 /** Sort order options */

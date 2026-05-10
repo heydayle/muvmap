@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useTrending } from './useTrending';
 import * as discoveryApiModule from '../../infras/discoveryApi';
 import type { TrendingLocation } from '../../core/models/publicLocation';
+import type { TrendingPeriod } from '../../core/models/feed';
 
 /** Minimal trending location factory */
 const makeTrending = (rank: number): TrendingLocation => ({
@@ -46,7 +47,7 @@ describe('useTrending', () => {
 
   it('re-fetches when period changes', async () => {
     const { result, rerender } = renderHook(({ period }) => useTrending(period), {
-      initialProps: { period: 'week' as const },
+      initialProps: { period: 'week' as TrendingPeriod },
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 

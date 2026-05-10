@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingLocation } from '../../core/models/publicLocation';
-import { TrendingPeriod } from '../../core/models/feed';
+import { TrendingLocation } from '../../../core/models/publicLocation';
+import { TrendingPeriod } from '../../../core/models/feed';
 import Skeleton from '@/shared/components/atoms/Skeleton';
 import { cn } from '@/shared/utils/cn';
 

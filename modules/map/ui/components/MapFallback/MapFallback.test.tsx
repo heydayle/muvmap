@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import MapFallback from './MapFallback';
-import type { MapMarkerData } from '../../core/models/mapMarker';
+import type { MapMarkerData } from '../../../core/models/mapMarker';
 
 const MOCK_MARKERS: MapMarkerData[] = [
   {
