@@ -43,96 +43,82 @@ export default function EmojiMoodPicker({
 
   return (
     <div
-      className="flex flex-wrap gap-3"
+      className="flex flex-wrap gap-3 justify-center"
       role="group"
       aria-label="Select emoji to express your mood"
     >
-      {EMOJI_PRESETS.map(({ mood, emoji, label }, groupIdx) => {
-        const color = MOOD_COLORS[mood];
-        return (
-          <motion.div
-            key={mood}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...springPresets.snappy, delay: groupIdx * 0.04 }}
-          >
-            {/* Mood label */}
-            <div
-              className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color }}
-            >
-              {label}
-            </div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={springPresets.snappy}
+        className="flex flex-wrap gap-2 p-2 justify-center"
+      >
+        {EMOJI_PRESETS.flatMap(({ mood, emoji }) =>
+          emoji.map((e) => {
+            const isSelected = selected.includes(e);
+            const isDisabledDueToLimit =
+              !isSelected && selected.length >= MAX_SELECT;
+            const resolvedMood = EMOJI_MOOD_MAP[e] ?? mood;
+            const accentColor = MOOD_COLORS[resolvedMood];
 
-            {/* Emoji row */}
-            <div className="flex flex-wrap gap-2">
-              {emoji.map((e) => {
-                const isSelected = selected.includes(e);
-                const isDisabledDueToLimit =
-                  !isSelected && selected.length >= MAX_SELECT;
-                const resolvedMood = EMOJI_MOOD_MAP[e] ?? mood;
-                const accentColor = MOOD_COLORS[resolvedMood];
+            return (
+              <motion.button
+                key={e}
+                type="button"
+                onClick={() => onToggle(e)}
+                disabled={disabled || isDisabledDueToLimit}
+                whileHover={
+                  !disabled && !isDisabledDueToLimit ? { scale: 1.15 } : {}
+                }
+                whileTap={!disabled ? { scale: 0.9 } : {}}
+                transition={springPresets.bouncy}
+                aria-label={`${e} — ${resolvedMood} mood${isSelected ? ' (selected)' : ''}`}
+                aria-pressed={isSelected}
+                className={[
+                  'relative flex h-8 w-8 items-center justify-center rounded-[14px] text-lg',
+                  'border transition-all duration-150',
+                  'disabled:cursor-not-allowed disabled:opacity-30',
+                  isSelected
+                    ? 'border-transparent shadow-[0_0_12px_rgba(0,123,255,0.4)]'
+                    : 'border-border-default bg-surface hover:border-opacity-40',
+                ].join(' ')}
+                style={
+                  isSelected
+                    ? {
+                        background: `${accentColor}22`,
+                        borderColor: accentColor,
+                      }
+                    : {}
+                }
+              >
+                {e}
 
-                return (
-                  <motion.button
-                    key={e}
-                    type="button"
-                    onClick={() => onToggle(e)}
-                    disabled={disabled || isDisabledDueToLimit}
-                    whileHover={
-                      !disabled && !isDisabledDueToLimit ? { scale: 1.15 } : {}
-                    }
-                    whileTap={!disabled ? { scale: 0.9 } : {}}
-                    transition={springPresets.bouncy}
-                    aria-label={`${e} — ${resolvedMood} mood${isSelected ? ' (selected)' : ''}`}
-                    aria-pressed={isSelected}
-                    className={[
-                      'relative flex h-8 w-8 items-center justify-center rounded-[14px] text-lg',
-                      'border transition-all duration-150',
-                      'disabled:cursor-not-allowed disabled:opacity-30',
-                      isSelected
-                        ? 'border-transparent shadow-[0_0_12px_rgba(0,123,255,0.4)]'
-                        : 'border-border-default bg-surface hover:border-opacity-40',
-                    ].join(' ')}
-                    style={
-                      isSelected
-                        ? {
-                            background: `${accentColor}22`,
-                            borderColor: accentColor,
-                          }
-                        : {}
-                    }
-                  >
-                    {e}
-
-                    {/* Selection indicator dot */}
-                    <AnimatePresence>
-                      {isSelected && (
-                        <motion.span
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                          transition={springPresets.bouncy}
-                          className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] text-white"
-                          style={{ background: accentColor }}
-                          aria-hidden="true"
-                        >
-                          ✓
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </motion.div>
-        );
-      })}
+                {/* Selection indicator dot */}
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      transition={springPresets.bouncy}
+                      className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] text-white"
+                      style={{ background: accentColor }}
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            );
+          }),
+        )}
+      </motion.div>
 
       {/* Selection count hint */}
       <motion.p
         animate={{ opacity: selected.length > 0 ? 1 : 0 }}
-        className="mt-1 text-[11px] text-text-tertiary"
+        className="mt-1 px-2 text-center text-[11px] text-text-tertiary"
         aria-live="polite"
       >
         {selected.length} of {MAX_SELECT} emoji selected

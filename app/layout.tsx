@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import AuthSection from '@/shared/components/AuthSection/AuthSection';
+import { APP_NAME } from '@/shared/constants/app';
 
 /**
  * Viewport configuration — theme color for mobile browsers.
@@ -13,7 +14,7 @@ export const viewport: Viewport = {
  * Root metadata for SEO — title and description.
  */
 export const metadata: Metadata = {
-  title: 'MoodMap — Find Places That Match Your Mood',
+  title: `${APP_NAME} — Find Places That Match Your Mood`,
   description:
     'AI-powered location discovery based on your current mood. Drop a vibe, get a place.',
 };

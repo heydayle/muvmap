@@ -2,15 +2,40 @@ import type { Metadata } from 'next';
 import MapPage from '@/modules/map/ui/pages';
 import { MapMarkerData } from '@/modules/map/core/models/mapMarker';
 import { MoodCategory } from '@/shared/types';
+import { APP_NAME } from '@/shared/constants/app';
 
-/**
- * SEO metadata for the Map page.
- */
-export const metadata: Metadata = {
-  title: 'Map — MoodMap',
-  description:
-    'Explore your saved locations on an interactive map. Filter by mood and find spots nearby.',
-};
+export async function generateMetadata({ searchParams }: MapRouteProps): Promise<Metadata> {
+  const params = await searchParams;
+
+  if (params.id && params.name) {
+    const tagsStr = params.tags ? ` (${params.tags.split(',').map(t => `#${t}`).join(' ')})` : '';
+    const moodStr = params.mood ? ` - A ${params.mood} vibe` : '';
+    const title = `${params.name} — ${APP_NAME}`;
+    const description = `Check out ${params.name} on ${APP_NAME}!${moodStr}${tagsStr}. Discover locations matching your vibe.`;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        siteName: APP_NAME,
+      },
+      twitter: {
+        card: 'summary',
+        title,
+        description,
+      },
+    };
+  }
+
+  return {
+    title: `Map — ${APP_NAME}`,
+    description:
+      'Explore your saved locations on an interactive map. Filter by mood and find spots nearby.',
+  };
+}
 
 /**
  * Props for the map route — Next.js passes searchParams automatically.

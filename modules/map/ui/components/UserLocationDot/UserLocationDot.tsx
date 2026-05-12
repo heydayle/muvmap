@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
+import { useEffect, useRef } from 'react';
 
 /**
  * Props for the UserLocationDot component.
@@ -23,7 +23,10 @@ export interface UserLocationDotProps {
  * @param props - UserLocationDotProps
  * @returns null (no React DOM output)
  */
-export default function UserLocationDot({ map, position }: UserLocationDotProps) {
+export default function UserLocationDot({
+  map,
+  position,
+}: UserLocationDotProps) {
   const markerRef = useRef<maplibregl.Marker | null>(null);
 
   useEffect(() => {
@@ -64,7 +67,10 @@ export default function UserLocationDot({ map, position }: UserLocationDotProps)
     if (markerRef.current) {
       markerRef.current.setLngLat(position);
     } else {
-      markerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
+      markerRef.current = new maplibregl.Marker({
+        element: el,
+        anchor: 'center',
+      })
         .setLngLat(position)
         .addTo(map);
     }

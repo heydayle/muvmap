@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import HomePage from './HomePage';
+import { APP_NAME } from '@/shared/constants/app';
 
 describe('HomePage', () => {
-  it('renders the MoodMap heading', () => {
+  it('renders the heading', () => {
     render(<HomePage />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('MoodMap');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(APP_NAME);
   });
 
   it('renders the status badge', () => {

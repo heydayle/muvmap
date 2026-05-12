@@ -5,6 +5,17 @@ import type { MoodCategory } from '@/shared/types';
 import { cn } from '@/shared/utils/cn';
 import { ensureSession } from '@/shared/utils/ensureSession';
 import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Check,
+  ChevronDown,
+  Heart,
+  MessageSquare,
+  Pencil,
+  Send,
+  Share2,
+  Split,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { MapMarkerData } from '../../../core/models/mapMarker';
 
@@ -408,7 +419,7 @@ export default function SelectedLocationCard({
                   aria-label="Edit location"
                   className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-[13px] text-white/60 transition-all hover:border-white/40 hover:bg-white/10 hover:text-white"
                 >
-                  ✏️
+                  <Pencil className="h-3.5 w-3.5" />
                 </motion.button>
               )}
               <button
@@ -416,7 +427,7 @@ export default function SelectedLocationCard({
                 aria-label="Close location card"
                 className="flex h-7 w-7 items-center justify-center rounded-full border border-white/20 text-white/60 transition-all hover:border-white/40 hover:bg-white/10 hover:text-white"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -510,10 +521,10 @@ export default function SelectedLocationCard({
                                 t.filter((_, idx) => idx !== i),
                               )
                             }
-                            className="ml-0.5 h-3 w-3 rounded-full text-[9px] opacity-70 hover:opacity-100"
+                            className="ml-0.5 flex h-3 w-3 items-center justify-center rounded-full text-[9px] opacity-70 hover:opacity-100"
                             style={{ background: `${editAccent}40` }}
                           >
-                            ✕
+                            <X className="h-2 w-2" />
                           </button>
                         </motion.span>
                       ))}
@@ -587,7 +598,9 @@ export default function SelectedLocationCard({
                         Saving…
                       </>
                     ) : (
-                      'Save changes'
+                      <span className="flex items-center gap-1.5">
+                        <Check className="h-4 w-4" /> Save changes
+                      </span>
                     )}
                   </motion.button>
                 </div>
@@ -661,7 +674,7 @@ export default function SelectedLocationCard({
                     onClick={handleDirections}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-[12px] border border-white/15 py-2 text-[13px] font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
                   >
-                    🗺 Directions
+                    <Split className="h-4 w-4" />
                   </button>
 
                   {/* Like button */}
@@ -691,8 +704,14 @@ export default function SelectedLocationCard({
                           damping: 20,
                         }}
                         aria-hidden="true"
+                        className="flex items-center justify-center"
                       >
-                        {liked ? '❤️' : '🤍'}
+                        <Heart
+                          className={cn(
+                            'h-4 w-4',
+                            liked ? 'fill-current text-white' : '',
+                          )}
+                        />
                       </motion.span>
                     </AnimatePresence>
                     <span className="tabular-nums">{likeCount}</span>
@@ -711,7 +730,15 @@ export default function SelectedLocationCard({
                         : accentColor,
                     }}
                   >
-                    {shareSuccess ? 'Copied!' : 'Share'}
+                    {shareSuccess ? (
+                      <>
+                        <Check className="h-4 w-4" /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-4 w-4" /> Share
+                      </>
+                    )}
                   </motion.button>
 
                   {reviewState === 'idle' && (
@@ -720,7 +747,7 @@ export default function SelectedLocationCard({
                       className="flex flex-1 items-center justify-center gap-1.5 rounded-[12px] py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
                       style={{ background: accentColor }}
                     >
-                      ⭐ Rate it
+                      <MessageSquare className="h-4 w-4" /> Rate it
                     </button>
                   )}
                 </div>
@@ -810,7 +837,9 @@ export default function SelectedLocationCard({
                               Submitting…
                             </>
                           ) : (
-                            'Submit Review →'
+                            <span className="flex items-center gap-1.5">
+                              <Send className="h-3.5 w-3.5" /> Submit Review
+                            </span>
                           )}
                         </motion.button>
                       </div>
@@ -829,8 +858,8 @@ export default function SelectedLocationCard({
                         border: `1px solid ${accentColor}33`,
                       }}
                     >
-                      <span className="text-2xl">🎉</span>
-                      <p className="text-sm font-semibold text-white">
+                      <Check className="h-6 w-6 text-green-400" />
+                      <p className="mt-1 text-sm font-semibold text-white">
                         Review submitted!
                       </p>
                       <p className="text-[11px] text-white/50">
@@ -880,7 +909,7 @@ export default function SelectedLocationCard({
                       }}
                       className="text-[10px] text-white/30"
                     >
-                      ▼
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </motion.span>
                   </button>
 

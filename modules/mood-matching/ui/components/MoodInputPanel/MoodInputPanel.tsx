@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { springPresets } from '@/shared/hooks/useAnimationPresets';
 import { MoodInputType } from '@/shared/types';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useCallback, useState } from 'react';
 import { MoodMatchInput } from '../../../core/models/moodMatch';
-import MoodTextInput from '../MoodTextInput';
 import EmojiMoodPicker from '../EmojiMoodPicker';
+import MoodTextInput from '../MoodTextInput';
 
 /** Props for the MoodInputPanel */
 export interface MoodInputPanelProps {
@@ -25,7 +25,10 @@ export interface MoodInputPanelProps {
  * @param props - MoodInputPanelProps
  * @returns Glassmorphic input panel with mode switcher
  */
-export default function MoodInputPanel({ onSubmit, isLoading = false }: MoodInputPanelProps) {
+export default function MoodInputPanel({
+  onSubmit,
+  isLoading = false,
+}: MoodInputPanelProps) {
   const [inputMode, setInputMode] = useState<MoodInputType>('text');
   const [textValue, setTextValue] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState<string[]>([]);
@@ -57,14 +60,16 @@ export default function MoodInputPanel({ onSubmit, isLoading = false }: MoodInpu
 
   const canSubmit =
     !isLoading &&
-    (inputMode === 'text' ? textValue.trim().length >= 2 : selectedEmoji.length > 0);
+    (inputMode === 'text'
+      ? textValue.trim().length >= 2
+      : selectedEmoji.length > 0);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={springPresets.smooth}
-      className="w-full rounded-[24px] border border-border-glass bg-surface-glass p-6 backdrop-blur-[16px]"
+      className="w-full rounded-[24px] border border-border-glass bg-surface-glass p-2 backdrop-blur-[16px]"
       style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
     >
       {/* Mode toggle */}
@@ -78,7 +83,9 @@ export default function MoodInputPanel({ onSubmit, isLoading = false }: MoodInpu
             transition={springPresets.snappy}
             className={[
               'relative flex-1 rounded-[10px] py-2 text-sm font-medium capitalize transition-colors',
-              inputMode === mode ? 'text-white' : 'text-text-tertiary hover:text-text-secondary',
+              inputMode === mode
+                ? 'text-white'
+                : 'text-text-tertiary hover:text-text-secondary',
             ].join(' ')}
             aria-pressed={inputMode === mode}
             aria-label={`Switch to ${mode} mood input`}
@@ -121,6 +128,7 @@ export default function MoodInputPanel({ onSubmit, isLoading = false }: MoodInpu
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
             transition={springPresets.smooth}
+            className="max-h-[35vh] overflow-y-auto overflow-x-hidden pr-2"
           >
             <EmojiMoodPicker
               selected={selectedEmoji}
@@ -158,7 +166,11 @@ export default function MoodInputPanel({ onSubmit, isLoading = false }: MoodInpu
                 <motion.span
                   key={i}
                   animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                  transition={{
+                    duration: 0.6,
+                    repeat: Infinity,
+                    delay: i * 0.15,
+                  }}
                   className="inline-block h-1 w-1 rounded-full bg-white"
                 />
               ))}

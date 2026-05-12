@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { createClient } from '@/shared/utils/supabase/client';
+import { APP_NAME } from '@/shared/constants/app';
 
 type ModalState = 'idle' | 'loading' | 'sent' | 'error';
 
@@ -87,7 +88,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             role="dialog"
             aria-modal="true"
-            aria-label="Sign in to MoodMap"
+            aria-label={`Sign in to ${APP_NAME}`}
             className="fixed left-1/2 top-1/2 z-[201] w-full max-w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] border border-white/10 bg-black/75 p-8 shadow-2xl backdrop-blur-2xl"
           >
             {/* Close */}
@@ -121,7 +122,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {/* Header */}
                 <div className="mb-7 text-center">
                   <p className="mb-1 text-2xl">✦</p>
-                  <h2 className="mb-1 text-xl font-bold text-white">Sign in to MoodMap</h2>
+                  <h2 className="mb-1 text-xl font-bold text-white">Sign in to {APP_NAME}</h2>
                   <p className="text-[13px] text-white/50">Drop vibes. Own your spots.</p>
                 </div>
 

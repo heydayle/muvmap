@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { APP_NAME } from '@/shared/constants/app';
 
 /**
  * HomePage is the landing page component for the MoodMap app.
@@ -33,7 +34,7 @@ export default function HomePage() {
           </span>
 
           <h1 className="bg-gradient-to-br from-white to-primary-light bg-clip-text text-transparent">
-            MoodMap
+            {APP_NAME}
           </h1>
 
           <p className="max-w-[520px] text-[clamp(16px,2vw,20px)] leading-relaxed text-text-secondary">

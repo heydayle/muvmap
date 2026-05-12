@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { MoodCategory } from '@/shared/types';
+import { cn } from '@/shared/utils/cn';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useCallback, useEffect, useState } from 'react';
+import { MapCamera } from '../../../core/models/mapConfig';
 import { MapFeatureFlags } from '../../../core/models/mapFlags';
 import { MapMarkerData } from '../../../core/models/mapMarker';
-import { MapCamera } from '../../../core/models/mapConfig';
-import { MoodCategory } from '@/shared/types';
-import { useMap } from '../../hooks/useMap';
-import { useMapMarkers } from '../../hooks/useMapMarkers';
 import { resolveMapStyle } from '../../../core/usecases/resolveMapStyle';
 import { mapRepository } from '../../../infras/mapApi';
-import { cn } from '@/shared/utils/cn';
+import { useMap } from '../../hooks/useMap';
+import { useMapMarkers } from '../../hooks/useMapMarkers';
 
 /**
  * Props for the MapView component.
@@ -29,7 +29,9 @@ export interface MapViewProps {
    * Receives a flyTo function so the parent can trigger camera animations
    * (e.g. flying to a deep-linked location from Discovery).
    */
-  onReady?: (flyTo: (camera: { center: [number, number]; zoom: number }) => void) => void;
+  onReady?: (
+    flyTo: (camera: { center: [number, number]; zoom: number }) => void,
+  ) => void;
   /**
    * A location deep-linked from Discovery. Always rendered as a selected pin
    * on the map regardless of viewport bounds.
@@ -167,12 +169,16 @@ export default function MapView({
     const lngs = overrideMarkers.map((m) => m.lngLat[0]);
     const lats = overrideMarkers.map((m) => m.lngLat[1]);
     map.fitBounds(
-      [Math.min(...lngs), Math.min(...lats), Math.max(...lngs), Math.max(...lats)],
+      [
+        Math.min(...lngs),
+        Math.min(...lats),
+        Math.max(...lngs),
+        Math.max(...lats),
+      ],
       { padding: 80, maxZoom: 15, duration: 800 },
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapLoaded, overrideMarkers]); // mapRef is a stable ref; flyTo excluded to prevent loop
-
 
   /** Map click: dismiss selected marker AND emit coordinates for add-location flow */
   useEffect(() => {
@@ -184,8 +190,10 @@ export default function MapView({
       onMapClickCoords?.([e.lngLat.lng, e.lngLat.lat]);
     };
     map.on('click', onMapClick);
-    return () => { map.off('click', onMapClick); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      map.off('click', onMapClick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapRef, setSelectedMarkerId]); // onMapClickCoords excluded — stable callback ref
 
   /** Pending drop-pin marker — shown while the add-location form is open */
@@ -194,24 +202,21 @@ export default function MapView({
     if (!map || !mapLoaded || !pendingPinLngLat) return;
 
     const el = document.createElement('div');
+    el.innerHTML = '📍';
     el.style.cssText = [
-      'width:28px;height:28px;border-radius:50%;',
-      'background:rgba(0,123,255,0.9);',
-      'border:3px solid white;',
-      'box-shadow:0 0 0 6px rgba(0,123,255,0.25);',
-      'animation:pulse-ring 1.4s ease-out infinite;',
+      'font-size:36px;',
+      'filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5));',
       'cursor:default;',
     ].join('');
 
     // Inject keyframe once
-    if (!document.getElementById('pulse-ring-style')) {
+    if (!document.getElementById('pin-drop-style')) {
       const style = document.createElement('style');
-      style.id = 'pulse-ring-style';
+      style.id = 'pin-drop-style';
       style.textContent = `
-        @keyframes pulse-ring {
-          0%   { box-shadow: 0 0 0 0   rgba(0,123,255,0.4); }
-          70%  { box-shadow: 0 0 0 12px rgba(0,123,255,0); }
-          100% { box-shadow: 0 0 0 0   rgba(0,123,255,0); }
+        @keyframes pin-drop {
+          0%   { transform: translateY(-40px) scale(0.5); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
         }
       `;
       document.head.appendChild(style);
@@ -232,9 +237,8 @@ export default function MapView({
       mounted = false;
       markerInstance?.remove();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapLoaded, pendingPinLngLat]);
-
 
   return (
     <div className={cn('relative w-full h-full overflow-hidden', className)}>

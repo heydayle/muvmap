@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import MoodMatchPage from '@/modules/mood-matching/ui/pages';
+import { APP_NAME } from '@/shared/constants/app';
 
 /**
  * SEO metadata for the Mood Matching page.
  */
 export const metadata: Metadata = {
-  title: 'Match My Mood — MoodMap',
+  title: `Match My Mood — ${APP_NAME}`,
   description:
     'Tell us how you\'re feeling and our AI will find the perfect spot that matches your vibe. Powered by Dify + DeepSeek.',
 };
