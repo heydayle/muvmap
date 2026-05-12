@@ -137,6 +137,7 @@ export default function AddLocationCard({
             latitude: lngLat[1],
             mood_category: mood,
             tags: finalTags,
+            is_public: true,
             ...(creatorNote.trim() && { creator_note: creatorNote.trim() }),
           }),
         });

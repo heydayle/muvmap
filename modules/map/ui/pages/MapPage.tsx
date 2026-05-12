@@ -101,16 +101,22 @@ export default function MapPage({
     setSelectedMarker(updated);
     // Also patch it in the mood markers list if it came from a mood search
     setMoodMarkers((prev) =>
-      prev ? prev.map((m) => (m.id === updated.id ? { ...updated, state: m.state } : m)) : prev,
+      prev
+        ? prev.map((m) =>
+            m.id === updated.id ? { ...updated, state: m.state } : m,
+          )
+        : prev,
     );
   }, []);
   const [heatmapActive, setHeatmapActive] = useState(false);
   const [is3DActive, setIs3DActive] = useState(false);
 
   // ── Text search ─────────────────────────────────────────────────────────
-  const [searchText, setSearchText]       = useState('');
+  const [searchText, setSearchText] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchMarkers, setSearchMarkers] = useState<MapMarkerData[] | null>(null);
+  const [searchMarkers, setSearchMarkers] = useState<MapMarkerData[] | null>(
+    null,
+  );
 
   /** Debounced effect: fetch markers matching the search text */
   useEffect(() => {
@@ -122,7 +128,9 @@ export default function MapPage({
     setSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/map/markers?q=${encodeURIComponent(trimmed)}`);
+        const res = await fetch(
+          `/api/map/markers?q=${encodeURIComponent(trimmed)}`,
+        );
         const data: MapMarkerData[] = await res.json();
         setSearchMarkers(data);
       } catch {
@@ -310,7 +318,7 @@ export default function MapPage({
   const handleLocationSaved = useCallback((newMarker: MapMarkerData) => {
     setPendingPin(null);
     // Append to moodMarkers if in mood mode, otherwise add to override list
-    setMoodMarkers((prev) => prev ? [...prev, newMarker] : [newMarker]);
+    setMoodMarkers((prev) => (prev ? [...prev, newMarker] : [newMarker]));
     setSelectedMarker(newMarker);
   }, []);
 
@@ -363,6 +371,15 @@ export default function MapPage({
     );
   }
 
+  const onClearMood = () => {
+    setMoodLabel(null);
+    setMoodMarkers(null);
+    flyToRef.current?.({
+      center: userPosition!,
+      zoom: 12,
+    });
+  };
+
   // ── Main map experience ───────────────────────────────────────────────────
   return (
     <main
@@ -408,7 +425,7 @@ export default function MapPage({
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={springPresets.smooth}
-          className="absolute left-1/2 top-4 z-30 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2"
+          className="absolute left-4 right-4 top-[68px] z-30 sm:left-1/2 sm:right-auto 2xl:top-4 sm:w-[min(420px,calc(100vw-2rem))] sm:-translate-x-1/2"
           aria-label="Location search and mood widget"
         >
           <div className="overflow-hidden rounded-[20px] border border-border-glass bg-surface-glass shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-[20px]">
@@ -417,7 +434,9 @@ export default function MapPage({
               <span className="shrink-0 text-sm text-white/40">
                 {searchLoading ? (
                   <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
-                ) : '🔍'}
+                ) : (
+                  '🔍'
+                )}
               </span>
               <input
                 id="map-text-search"
@@ -433,7 +452,7 @@ export default function MapPage({
                 <button
                   type="button"
                   onClick={() => setSearchText('')}
-                  className="shrink-0 text-xs text-white/30 transition-colors hover:text-white/60"
+                  className="shrink-0 text-xs text-white transition-colors hover:text-white/60"
                   aria-label="Clear search"
                 >
                   ✕
@@ -513,18 +532,11 @@ export default function MapPage({
                   <span
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMoodLabel(null);
-                      setMoodMarkers(null);
-                    }}
+                    onClick={(e) => onClearMood()}
                     onKeyDown={(e) =>
-                      e.key === 'Enter' &&
-                      (e.stopPropagation(),
-                      setMoodLabel(null),
-                      setMoodMarkers(null))
+                      e.key === 'Enter' && (e.stopPropagation(), onClearMood())
                     }
-                    className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-text-tertiary transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-white transition-colors hover:bg-white/10 hover:text-white"
                     aria-label="Clear mood results"
                   >
                     ✕
@@ -533,7 +545,7 @@ export default function MapPage({
                 <motion.span
                   animate={{ rotate: showMoodPanel ? 180 : 0 }}
                   transition={springPresets.snappy}
-                  className="text-[10px] text-text-tertiary"
+                  className="text-[10px] text-white"
                   aria-hidden="true"
                 >
                   ▼

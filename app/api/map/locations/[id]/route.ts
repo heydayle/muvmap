@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { MoodCategory } from '@/shared/types';
 import { isSupabaseConfigured } from '@/shared/utils/supabase';
 import { createClient } from '@/shared/utils/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const parseTags = (raw: string | null | undefined): string[] =>
   raw ? raw.split(',').map((t) => t.trim()).filter(Boolean) : [];
@@ -13,6 +13,7 @@ interface UpdateLocationBody {
   mood_category?: MoodCategory | null;
   tags?: string[];
   creator_note?: string | null;
+  is_public?: boolean;
 }
 
 /**
@@ -61,6 +62,7 @@ export async function PATCH(
       ? creator_note.trim().slice(0, 500) || null
       : null;
   }
+  patch.is_public = true;
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 422 });
@@ -79,7 +81,7 @@ export async function PATCH(
       .from('locations')
       .update(patch)
       .eq('id', id)
-      .select('id, name, latitude, longitude, mood_category, tags, creator_note, user_id')
+      .select('id, name, latitude, longitude, mood_category, tags, creator_note, user_id, is_public')
       .single();
 
     if (error) {
@@ -100,6 +102,7 @@ export async function PATCH(
       mood_category: data.mood_category ?? null,
       tags: parseTags(data.tags),
       state: 'default',
+      is_public: data.is_public,
       ...(data.creator_note ? { creator_note: data.creator_note } : {}),
       ...(data.user_id ? { user_id: data.user_id } : {}),
     });

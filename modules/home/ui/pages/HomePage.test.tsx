@@ -18,8 +18,8 @@ describe('HomePage', () => {
     expect(screen.getByText(/ai-powered location discovery/i)).toBeInTheDocument();
   });
 
-  it('renders the "Match My Mood" CTA button', () => {
+  it('renders the "Match My Mood" CTA link', () => {
     render(<HomePage />);
-    expect(screen.getByRole('button', { name: /match my mood/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /match my mood/i })).toBeInTheDocument();
   });
 });

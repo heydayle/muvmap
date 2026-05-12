@@ -17,7 +17,7 @@ export default function AuthSection() {
   return (
     <>
       {/* Fixed position nav pill */}
-      <div className="fixed right-4 top-4 z-[100]">
+      <div className="fixed right-4 top-4 z-[100] max-w-[calc(100vw-2rem)]">
         <UserButton onSignInClick={() => setModalOpen(true)} />
       </div>
 

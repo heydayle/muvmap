@@ -1,30 +1,40 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PublicLocation } from '../../../core/models/publicLocation';
 import { cn } from '@/shared/utils/cn';
 import { ensureSession } from '@/shared/utils/ensureSession';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useCallback, useState } from 'react';
+import { PublicLocation } from '../../../core/models/publicLocation';
 
 /** Mood → accent color token map */
 const MOOD_COLORS: Record<string, string> = {
-  calm:     'text-sky-300 bg-sky-500/15 border-sky-500/25',
-  happy:    'text-yellow-300 bg-yellow-400/15 border-yellow-400/25',
-  chill:    'text-violet-300 bg-violet-500/15 border-violet-500/25',
-  excited:  'text-orange-300 bg-orange-400/15 border-orange-400/25',
-  energetic:'text-green-300 bg-green-500/15 border-green-500/25',
+  calm: 'text-sky-300 bg-sky-500/15 border-sky-500/25',
+  happy: 'text-yellow-300 bg-yellow-400/15 border-yellow-400/25',
+  chill: 'text-violet-300 bg-violet-500/15 border-violet-500/25',
+  excited: 'text-orange-300 bg-orange-400/15 border-orange-400/25',
+  energetic: 'text-green-300 bg-green-500/15 border-green-500/25',
   romantic: 'text-pink-300 bg-pink-500/15 border-pink-500/25',
-  sad:      'text-slate-300 bg-slate-500/15 border-slate-500/25',
+  sad: 'text-slate-300 bg-slate-500/15 border-slate-500/25',
 };
 
 const MOOD_HEX: Record<string, string> = {
-  calm: '#38BDF8', happy: '#FACC15', chill: '#A78BFA',
-  excited: '#FB923C', energetic: '#22C55E', romantic: '#FB7185', sad: '#64748B',
+  calm: '#38BDF8',
+  happy: '#FACC15',
+  chill: '#A78BFA',
+  excited: '#FB923C',
+  energetic: '#22C55E',
+  romantic: '#FB7185',
+  sad: '#64748B',
 };
 
 const MOOD_EMOJI: Record<string, string> = {
-  calm: '😌', happy: '😄', chill: '🧘',
-  excited: '🔥', energetic: '⚡', romantic: '💕', sad: '😢',
+  calm: '😌',
+  happy: '😄',
+  chill: '🧘',
+  excited: '🔥',
+  energetic: '⚡',
+  romantic: '💕',
+  sad: '😢',
 };
 
 /** Stagger animation for card entrance */
@@ -33,7 +43,12 @@ const cardVariants = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { type: 'spring' as const, stiffness: 200, damping: 25, delay: i * 0.05 },
+    transition: {
+      type: 'spring' as const,
+      stiffness: 200,
+      damping: 25,
+      delay: i * 0.05,
+    },
   }),
 };
 
@@ -64,44 +79,56 @@ export default function PublicLocationCard({
   index = 0,
   featured = false,
 }: PublicLocationCardProps) {
-  const moodColor = location.mood_category ? MOOD_COLORS[location.mood_category] : '';
-  const moodEmoji = location.mood_category ? MOOD_EMOJI[location.mood_category] : '📍';
-  const accentHex = location.mood_category ? (MOOD_HEX[location.mood_category] ?? '#fff') : '#fff';
+  const moodColor = location.mood_category
+    ? MOOD_COLORS[location.mood_category]
+    : '';
+  const moodEmoji = location.mood_category
+    ? MOOD_EMOJI[location.mood_category]
+    : '📍';
+  const accentHex = location.mood_category
+    ? (MOOD_HEX[location.mood_category] ?? '#fff')
+    : '#fff';
 
   // ── Like state (optimistic) ─────────────────────────────────────────────────
-  const [liked, setLiked]         = useState(location.is_liked ?? false);
+  const [liked, setLiked] = useState(location.is_liked ?? false);
   const [likeCount, setLikeCount] = useState(location.like_count);
-  const [liking, setLiking]       = useState(false);
+  const [liking, setLiking] = useState(false);
 
-  const handleLike = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Don't trigger card click → map navigation
-    if (liking) return;
+  const handleLike = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation(); // Don't trigger card click → map navigation
+      if (liking) return;
 
-    // Optimistic update
-    const wasLiked = liked;
-    setLiked(!wasLiked);
-    setLikeCount((c: number) => c + (wasLiked ? -1 : 1));
-    setLiking(true);
+      // Optimistic update
+      const wasLiked = liked;
+      setLiked(!wasLiked);
+      setLikeCount((c: number) => c + (wasLiked ? -1 : 1));
+      setLiking(true);
 
-    try {
-      // Ensure anonymous session so the server can attribute the like
-      await ensureSession();
+      try {
+        // Ensure anonymous session so the server can attribute the like
+        await ensureSession();
 
-      const res = await fetch(`/api/discovery/likes/${location.id}`, { method: 'POST' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(`/api/discovery/likes/${location.id}`, {
+          method: 'POST',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const { liked: serverLiked, like_count: serverCount } = await res.json();
-      // Sync with server truth
-      setLiked(serverLiked);
-      setLikeCount(serverCount);
-    } catch {
-      // Revert on failure
-      setLiked(wasLiked);
-      setLikeCount((c: number) => c + (wasLiked ? 1 : -1));
-    } finally {
-      setLiking(false);
-    }
-  }, [liked, liking, location.id]);
+        const { liked: serverLiked, like_count: serverCount } =
+          await res.json();
+        // Sync with server truth
+        setLiked(serverLiked);
+        setLikeCount(serverCount);
+      } catch {
+        // Revert on failure
+        setLiked(wasLiked);
+        setLikeCount((c: number) => c + (wasLiked ? 1 : -1));
+      } finally {
+        setLiking(false);
+      }
+    },
+    [liked, liking, location.id],
+  );
 
   return (
     <motion.article
@@ -111,7 +138,10 @@ export default function PublicLocationCard({
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      whileHover={{ y: -4, transition: { type: 'spring', stiffness: 400, damping: 30 } }}
+      whileHover={{
+        y: -4,
+        transition: { type: 'spring', stiffness: 400, damping: 30 },
+      }}
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick?.(location)}
       className={cn(
@@ -122,14 +152,6 @@ export default function PublicLocationCard({
         featured && 'md:col-span-2',
       )}
     >
-      {/* Accent top line (mood color) */}
-      {location.mood_category && (
-        <div
-          className="absolute inset-x-0 top-0 h-[2px] rounded-t-[20px]"
-          style={{ background: `linear-gradient(90deg, ${accentHex}, ${accentHex}33)` }}
-        />
-      )}
-
       {/* Mood badge */}
       {location.mood_category && (
         <span
@@ -160,7 +182,10 @@ export default function PublicLocationCard({
           {location.tags.slice(0, 4).map((tag) => (
             <span
               key={tag.name}
-              className={cn('rounded-full px-2.5 py-0.5 text-[11px] font-medium border opacity-80', moodColor)}
+              className={cn(
+                'rounded-full px-2.5 py-0.5 text-[11px] font-medium border opacity-80',
+                moodColor,
+              )}
             >
               #{tag.name}
             </span>
@@ -180,7 +205,9 @@ export default function PublicLocationCard({
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
             {location.author.handle.replace('@', '').charAt(0).toUpperCase()}
           </div>
-          <span className="text-xs text-text-tertiary">{location.author.handle}</span>
+          <span className="text-xs text-text-tertiary">
+            {location.author.handle}
+          </span>
         </div>
 
         {/* Like button + view count */}

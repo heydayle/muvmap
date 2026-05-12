@@ -12,6 +12,7 @@ const MOCK_MARKERS: MapMarkerData[] = [
     mood_category: 'calm',
     tags: ['cozy', 'coffee'],
     state: 'default',
+    is_public: true,
   },
   {
     id: 'marker-002',
@@ -20,6 +21,7 @@ const MOCK_MARKERS: MapMarkerData[] = [
     mood_category: 'excited',
     tags: ['gaming', 'neon'],
     state: 'default',
+    is_public: true,
   },
 ];
 

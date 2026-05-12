@@ -61,6 +61,7 @@ export default async function MapRoute({ searchParams }: MapRouteProps) {
       mood_category: (params.mood as MoodCategory) || null,
       tags: params.tags ? params.tags.split(',').filter(Boolean) : [],
       state: 'selected',
+      is_public: true,
     };
   }
 

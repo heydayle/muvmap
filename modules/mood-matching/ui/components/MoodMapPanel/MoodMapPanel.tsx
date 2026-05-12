@@ -38,6 +38,7 @@ function toMarkerData(
     mood_category: location.mood_category,
     tags: location.tags,
     state: isSelected ? 'selected' : 'default',
+    is_public: true,
   };
 }
 

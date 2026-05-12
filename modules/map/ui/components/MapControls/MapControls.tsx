@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/shared/utils/cn';
+import { AnimatePresence, motion } from 'framer-motion';
 import { UserLocationStatus } from '../../hooks/useUserLocation';
 
 /**
@@ -94,7 +93,9 @@ export default function MapControls({
   onLocateMe,
 }: MapControlsProps) {
   const hasAnyControl =
-    flags.user_location_enabled || flags.heatmap_enabled || flags.map_3d_enabled;
+    flags.user_location_enabled ||
+    flags.heatmap_enabled ||
+    flags.map_3d_enabled;
 
   if (!hasAnyControl) return null;
 
@@ -104,7 +105,7 @@ export default function MapControls({
         initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.3 }}
-        className="absolute right-4 top-4 z-30 flex flex-col gap-2"
+        className="absolute right-4 bottom-4 z-30 flex flex-col gap-2"
         aria-label="Map controls"
       >
         {flags.user_location_enabled && (

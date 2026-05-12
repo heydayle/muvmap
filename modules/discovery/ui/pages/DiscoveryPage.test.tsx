@@ -6,6 +6,13 @@ import * as discoveryApiModule from '../../infras/discoveryApi';
 import type { PaginatedPublicLocations } from '../../core/models/publicLocation';
 import type { TrendingLocation } from '../../core/models/publicLocation';
 
+/** Stub Next.js App Router hooks — required because DiscoveryPage calls useRouter() */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+  usePathname: () => '/discover',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 /** Mock framer-motion to avoid animation issues in test environment */
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion');

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { MoodCategory } from '@/shared/types';
 import { MapMarkerData } from '@/modules/map/core/models/mapMarker';
+import { MoodCategory } from '@/shared/types';
+import { ensureProfile } from '@/shared/utils/ensureProfile';
 import { isSupabaseConfigured } from '@/shared/utils/supabase';
 import { createClient } from '@/shared/utils/supabase/server';
-import { ensureProfile } from '@/shared/utils/ensureProfile';
+import { NextRequest, NextResponse } from 'next/server';
 
 /** DB stores tags as a comma-joined string; UI expects string[] */
 const parseTags = (raw: string | null | undefined): string[] =>
@@ -18,6 +18,7 @@ interface AddLocationBody {
   mood_category?: MoodCategory | null;
   tags?: string[];
   creator_note?: string;
+  is_public?: boolean;
 }
 
 /**
@@ -80,10 +81,11 @@ export async function POST(request: NextRequest) {
           latitude,
           mood_category: mood_category ?? null,
           tags: sanitizedTags,
+          is_public: true,
           ...(sanitizedNote ? { creator_note: sanitizedNote } : {}),
           ...(user ? { user_id: user.id } : {}),
         })
-        .select('id, name, latitude, longitude, mood_category, tags, creator_note, user_id')
+        .select('id, name, latitude, longitude, mood_category, tags, creator_note, user_id, is_public')
         .single();
 
       if (error) throw error;
@@ -95,6 +97,7 @@ export async function POST(request: NextRequest) {
         mood_category: data.mood_category ?? null,
         tags: parseTags(data.tags),
         state: 'default',
+        is_public: data.is_public,
         ...(data.creator_note ? { creator_note: data.creator_note } : {}),
         ...(data.user_id ? { user_id: data.user_id } : {}),
       };
@@ -113,6 +116,7 @@ export async function POST(request: NextRequest) {
     mood_category: mood_category ?? null,
     tags: Array.isArray(tags) ? tags.slice(0, 10) : [],
     state: 'default',
+    is_public: true,
     ...(sanitizedNote ? { creator_note: sanitizedNote } : {}),
   };
 

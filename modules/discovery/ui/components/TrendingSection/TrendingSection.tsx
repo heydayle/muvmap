@@ -1,11 +1,10 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { TrendingLocation } from '../../../core/models/publicLocation';
-import { TrendingPeriod } from '../../../core/models/feed';
 import Skeleton from '@/shared/components/atoms/Skeleton';
 import { cn } from '@/shared/utils/cn';
+import { motion } from 'framer-motion';
+import { TrendingPeriod } from '../../../core/models/feed';
+import { TrendingLocation } from '../../../core/models/publicLocation';
 
 /** Rank badge color based on position */
 const RANK_STYLES: Record<number, string> = {
@@ -55,7 +54,7 @@ export default function TrendingSection({
   return (
     <section aria-label="Trending locations" className="px-4 py-6 md:px-8">
       {/* Section header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold text-white">
           🔥 Trending Now
         </h2>
@@ -83,7 +82,7 @@ export default function TrendingSection({
 
       {/* Scrollable card row */}
       <div
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pt-4"
         style={{ scrollbarWidth: 'none' }}
       >
         {isLoading
@@ -110,7 +109,10 @@ export default function TrendingSection({
                 key={location.id}
                 type="button"
                 onClick={() => onLocationClick?.(location)}
-                whileHover={{ y: -3, transition: { type: 'spring', stiffness: 400, damping: 30 } }}
+                whileHover={{
+                  y: -3,
+                  transition: { type: 'spring', stiffness: 400, damping: 30 },
+                }}
                 whileTap={{ scale: 0.97 }}
                 className={cn(
                   'w-56 shrink-0 snap-start cursor-pointer rounded-[20px] border border-border-glass',
@@ -123,7 +125,8 @@ export default function TrendingSection({
                 <span
                   className={cn(
                     'inline-flex h-6 w-6 items-center justify-center rounded-full border text-[11px] font-bold',
-                    RANK_STYLES[location.rank] ?? 'bg-white/10 text-white border-white/20',
+                    RANK_STYLES[location.rank] ??
+                      'bg-white/10 text-white border-white/20',
                   )}
                 >
                   {location.rank}

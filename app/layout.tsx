@@ -51,7 +51,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {/* Global auth nav — guest Sign In pill / authenticated avatar */}
+        {/* Global header — nav links + auth in one pill (top-right) */}
         <AuthSection />
         {children}
       </body>
