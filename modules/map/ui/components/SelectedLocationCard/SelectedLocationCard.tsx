@@ -1,12 +1,12 @@
 'use client';
 
+import { useUser } from '@/shared/hooks/useUser';
+import type { MoodCategory } from '@/shared/types';
 import { cn } from '@/shared/utils/cn';
 import { ensureSession } from '@/shared/utils/ensureSession';
-import { useUser } from '@/shared/hooks/useUser';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MapMarkerData } from '../../../core/models/mapMarker';
-import type { MoodCategory } from '@/shared/types';
 
 /** Mood → accent hex for top border and badge */
 const MOOD_HEX: Record<string, string> = {
@@ -30,19 +30,24 @@ const MOOD_EMOJI: Record<string, string> = {
 };
 
 const MOOD_OPTIONS: { value: MoodCategory; emoji: string; label: string }[] = [
-  { value: 'calm',      emoji: '😌', label: 'Calm' },
-  { value: 'happy',     emoji: '😄', label: 'Happy' },
+  { value: 'calm', emoji: '😌', label: 'Calm' },
+  { value: 'happy', emoji: '😄', label: 'Happy' },
   { value: 'energetic', emoji: '⚡', label: 'Energetic' },
-  { value: 'romantic',  emoji: '💕', label: 'Romantic' },
-  { value: 'chill',     emoji: '🧘', label: 'Chill' },
-  { value: 'excited',   emoji: '🔥', label: 'Excited' },
-  { value: 'sad',       emoji: '😢', label: 'Sad' },
+  { value: 'romantic', emoji: '💕', label: 'Romantic' },
+  { value: 'chill', emoji: '🧘', label: 'Chill' },
+  { value: 'excited', emoji: '🔥', label: 'Excited' },
+  { value: 'sad', emoji: '😢', label: 'Sad' },
 ];
 
 const TAG_MAX_LEN = 24;
 
 function normaliseTag(raw: string): string {
-  return raw.trim().toLowerCase().replace(/^#/, '').replace(/\s+/g, '-').slice(0, TAG_MAX_LEN);
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/^#/, '')
+    .replace(/\s+/g, '-')
+    .slice(0, TAG_MAX_LEN);
 }
 
 /** Friendly display of lat/lng */
@@ -61,7 +66,7 @@ export interface SelectedLocationCardProps {
 }
 
 type ReviewState = 'idle' | 'open' | 'submitting' | 'submitted';
-type EditState   = 'idle' | 'editing' | 'saving' | 'saved';
+type EditState = 'idle' | 'editing' | 'saving' | 'saved';
 
 /** Shape of a single review row from GET /api/reviews */
 interface ReviewRow {
@@ -75,7 +80,7 @@ interface ReviewRow {
 /** Relative time helper */
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60)  return 'just now';
+  if (diff < 60) return 'just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
@@ -91,26 +96,27 @@ export default function SelectedLocationCard({
 
   // ── Review state ───────────────────────────────────────────────────────────
   const [reviewState, setReviewState] = useState<ReviewState>('idle');
-  const [rating, setRating]           = useState(0);
-  const [reviewText, setReviewText]   = useState('');
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
 
   // ── Edit state ─────────────────────────────────────────────────────────────
-  const [editState,    setEditState]    = useState<EditState>('idle');
-  const [editName,     setEditName]     = useState('');
-  const [editMood,     setEditMood]     = useState<MoodCategory | null>(null);
-  const [editTags,     setEditTags]     = useState<string[]>([]);
+  const [editState, setEditState] = useState<EditState>('idle');
+  const [editName, setEditName] = useState('');
+  const [editMood, setEditMood] = useState<MoodCategory | null>(null);
+  const [editTags, setEditTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState('');
-  const [editNote,     setEditNote]     = useState('');
-  const [editError,    setEditError]    = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [editError, setEditError] = useState('');
+  const [shareSuccess, setShareSuccess] = useState<boolean>(false);
 
   const accentColor = marker?.mood_category
     ? (MOOD_HEX[marker.mood_category] ?? '#fff')
     : '#fff';
 
   // ── Like state ─────────────────────────────────────────────────────────
-  const [liked,     setLiked]     = useState(false);
+  const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [liking,    setLiking]    = useState(false);
+  const [liking, setLiking] = useState(false);
 
   /** Fetch current like status whenever the opened marker changes */
   useEffect(() => {
@@ -119,14 +125,18 @@ export default function SelectedLocationCard({
     setLikeCount(0);
     let cancelled = false;
     fetch(`/api/discovery/likes/${marker.id}`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
         setLiked(data.liked);
         setLikeCount(data.like_count);
       })
-      .catch(() => {/* silently ignore */});
-    return () => { cancelled = true; };
+      .catch(() => {
+        /* silently ignore */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [marker?.id]);
 
   const handleLike = useCallback(async () => {
@@ -138,7 +148,9 @@ export default function SelectedLocationCard({
     setLiking(true);
     try {
       await ensureSession();
-      const res = await fetch(`/api/discovery/likes/${marker.id}`, { method: 'POST' });
+      const res = await fetch(`/api/discovery/likes/${marker.id}`, {
+        method: 'POST',
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { liked: serverLiked, like_count: serverCount } = await res.json();
       setLiked(serverLiked);
@@ -153,10 +165,10 @@ export default function SelectedLocationCard({
   }, [marker?.id, liked, liking]);
 
   // ── Reviews list state ────────────────────────────────────────────
-  const [reviews,        setReviews]        = useState<ReviewRow[]>([]);
-  const [avgRating,      setAvgRating]      = useState(0);
+  const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
   const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [showReviews,    setShowReviews]    = useState(false);
+  const [showReviews, setShowReviews] = useState(false);
 
   /** Fetch reviews whenever the opened marker changes */
   useEffect(() => {
@@ -167,15 +179,19 @@ export default function SelectedLocationCard({
     setReviewsLoading(true);
     let cancelled = false;
     fetch(`/api/reviews?location_id=${marker.id}`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
         setReviews(data.reviews ?? []);
         setAvgRating(data.average_rating ?? 0);
       })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setReviewsLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setReviewsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [marker?.id]);
 
   // ── Start edit ────────────────────────────────────────────────────────────
@@ -312,6 +328,25 @@ export default function SelectedLocationCard({
 
   const editAccent = editMood ? (MOOD_HEX[editMood] ?? '#fff') : '#fff';
 
+  const handleShareClick = (marker: MapMarkerData) => {
+    if (marker.lngLat[0] === null || marker.lngLat[1] === null) return;
+
+    const params = new URLSearchParams({
+      id: marker.id,
+      lat: String(marker.lngLat[1]),
+      lng: String(marker.lngLat[0]),
+      name: marker.name,
+      mood: marker.mood_category ?? '',
+      tags: marker.tags.join(','),
+    });
+
+    window.navigator.clipboard.writeText(
+      `${window.location.origin}/map?${params.toString()}`,
+    );
+    setShareSuccess(true);
+    setTimeout(() => setShareSuccess(false), 2000);
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -332,7 +367,9 @@ export default function SelectedLocationCard({
         {/* Accent top bar */}
         <div
           className="h-[3px] w-full"
-          style={{ background: `linear-gradient(90deg, ${accentColor}, ${accentColor}33)` }}
+          style={{
+            background: `linear-gradient(90deg, ${accentColor}, ${accentColor}33)`,
+          }}
         />
 
         <div className="p-5">
@@ -341,7 +378,9 @@ export default function SelectedLocationCard({
             <div className="min-w-0 flex-1">
               {marker.mood_category && (
                 <div className="mb-1 flex items-center gap-1.5">
-                  <span className="text-xs">{MOOD_EMOJI[marker.mood_category]}</span>
+                  <span className="text-xs">
+                    {MOOD_EMOJI[marker.mood_category]}
+                  </span>
                   <span
                     className="text-[10px] font-semibold uppercase tracking-widest"
                     style={{ color: accentColor }}
@@ -350,7 +389,9 @@ export default function SelectedLocationCard({
                   </span>
                 </div>
               )}
-              <h3 className="truncate text-base font-bold text-white">{marker.name}</h3>
+              <h3 className="truncate text-base font-bold text-white">
+                {marker.name}
+              </h3>
               <p className="mt-0.5 font-mono text-[10px] text-white/40">
                 {formatCoords(marker.lngLat)}
               </p>
@@ -407,18 +448,32 @@ export default function SelectedLocationCard({
 
                 {/* Mood */}
                 <div>
-                  <p className="mb-1.5 text-[11px] font-semibold text-white/70">Vibe</p>
+                  <p className="mb-1.5 text-[11px] font-semibold text-white/70">
+                    Vibe
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
                     {MOOD_OPTIONS.map((m) => (
                       <button
                         key={m.value}
                         type="button"
-                        onClick={() => setEditMood((prev) => prev === m.value ? null : m.value)}
+                        onClick={() =>
+                          setEditMood((prev) =>
+                            prev === m.value ? null : m.value,
+                          )
+                        }
                         className="rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all"
                         style={
                           editMood === m.value
-                            ? { background: `${MOOD_HEX[m.value]}33`, color: MOOD_HEX[m.value], border: `1px solid ${MOOD_HEX[m.value]}88` }
-                            : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }
+                            ? {
+                                background: `${MOOD_HEX[m.value]}33`,
+                                color: MOOD_HEX[m.value],
+                                border: `1px solid ${MOOD_HEX[m.value]}88`,
+                              }
+                            : {
+                                background: 'rgba(255,255,255,0.08)',
+                                color: 'rgba(255,255,255,0.6)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                              }
                         }
                       >
                         {m.emoji} {m.label}
@@ -429,10 +484,10 @@ export default function SelectedLocationCard({
 
                 {/* Tags */}
                 <div>
-                  <p className="mb-1 text-[11px] font-semibold text-white/70">Tags</p>
-                  <div
-                    className="flex min-h-[38px] flex-wrap items-center gap-1 rounded-[10px] border border-white/15 bg-white/10 px-2.5 py-1.5 transition-all focus-within:border-white/35"
-                  >
+                  <p className="mb-1 text-[11px] font-semibold text-white/70">
+                    Tags
+                  </p>
+                  <div className="flex min-h-[38px] flex-wrap items-center gap-1 rounded-[10px] border border-white/15 bg-white/10 px-2.5 py-1.5 transition-all focus-within:border-white/35">
                     <AnimatePresence>
                       {editTags.map((tag, i) => (
                         <motion.span
@@ -441,15 +496,25 @@ export default function SelectedLocationCard({
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.7 }}
                           className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                          style={{ background: `${editAccent}28`, color: editAccent, border: `1px solid ${editAccent}55` }}
+                          style={{
+                            background: `${editAccent}28`,
+                            color: editAccent,
+                            border: `1px solid ${editAccent}55`,
+                          }}
                         >
                           #{tag}
                           <button
                             type="button"
-                            onClick={() => setEditTags((t) => t.filter((_, idx) => idx !== i))}
+                            onClick={() =>
+                              setEditTags((t) =>
+                                t.filter((_, idx) => idx !== i),
+                              )
+                            }
                             className="ml-0.5 h-3 w-3 rounded-full text-[9px] opacity-70 hover:opacity-100"
                             style={{ background: `${editAccent}40` }}
-                          >✕</button>
+                          >
+                            ✕
+                          </button>
                         </motion.span>
                       ))}
                     </AnimatePresence>
@@ -458,11 +523,21 @@ export default function SelectedLocationCard({
                         value={editTagInput}
                         onChange={(e) => setEditTagInput(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitEditTag(); }
-                          if (e.key === 'Backspace' && !editTagInput && editTags.length > 0) setEditTags((t) => t.slice(0, -1));
+                          if (e.key === 'Enter' || e.key === ',') {
+                            e.preventDefault();
+                            commitEditTag();
+                          }
+                          if (
+                            e.key === 'Backspace' &&
+                            !editTagInput &&
+                            editTags.length > 0
+                          )
+                            setEditTags((t) => t.slice(0, -1));
                         }}
                         onBlur={() => editTagInput.trim() && commitEditTag()}
-                        placeholder={editTags.length === 0 ? 'cozy, rooftop…' : '+tag'}
+                        placeholder={
+                          editTags.length === 0 ? 'cozy, rooftop…' : '+tag'
+                        }
                         className="min-w-[60px] flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
                       />
                     )}
@@ -471,7 +546,9 @@ export default function SelectedLocationCard({
 
                 {/* Creator note */}
                 <div>
-                  <p className="mb-1 text-[11px] font-semibold text-white/70">Your thoughts</p>
+                  <p className="mb-1 text-[11px] font-semibold text-white/70">
+                    Your thoughts
+                  </p>
                   <textarea
                     value={editNote}
                     onChange={(e) => setEditNote(e.target.value)}
@@ -509,7 +586,9 @@ export default function SelectedLocationCard({
                         <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                         Saving…
                       </>
-                    ) : 'Save changes'}
+                    ) : (
+                      'Save changes'
+                    )}
                   </motion.button>
                 </div>
               </motion.form>
@@ -564,7 +643,10 @@ export default function SelectedLocationCard({
                       borderColor: `${accentColor}30`,
                     }}
                   >
-                    <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>
+                    <p
+                      className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: accentColor }}
+                    >
                       <span>✦</span> Creator's note
                     </p>
                     <p className="text-[13px] italic leading-relaxed text-white/85">
@@ -603,13 +685,33 @@ export default function SelectedLocationCard({
                         initial={{ scale: 0.4, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.4, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 500,
+                          damping: 20,
+                        }}
                         aria-hidden="true"
                       >
                         {liked ? '❤️' : '🤍'}
                       </motion.span>
                     </AnimatePresence>
                     <span className="tabular-nums">{likeCount}</span>
+                  </motion.button>
+                  {/* Share button */}
+                  <motion.button
+                    type="button"
+                    onClick={() => handleShareClick(marker)}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-1.5 rounded-[12px] py-2 text-[13px] font-semibold transition-opacity',
+                      shareSuccess ? 'opacity-100' : 'text-white opacity-90',
+                    )}
+                    style={{
+                      background: shareSuccess
+                        ? 'linear-gradient(135deg, #FF5E62, #FF9966)'
+                        : accentColor,
+                    }}
+                  >
+                    {shareSuccess ? 'Copied!' : 'Share'}
                   </motion.button>
 
                   {reviewState === 'idle' && (
@@ -635,7 +737,9 @@ export default function SelectedLocationCard({
                       className="space-y-3 overflow-hidden"
                     >
                       <div className="h-px bg-white/10" />
-                      <p className="text-[11px] font-semibold text-white/60">Your vibe rating</p>
+                      <p className="text-[11px] font-semibold text-white/60">
+                        Your vibe rating
+                      </p>
 
                       {/* Stars */}
                       <div className="flex gap-1">
@@ -645,7 +749,12 @@ export default function SelectedLocationCard({
                             type="button"
                             onClick={() => setRating(star)}
                             className="text-xl transition-transform hover:scale-110"
-                            style={{ color: star <= rating ? accentColor : 'rgba(255,255,255,0.2)' }}
+                            style={{
+                              color:
+                                star <= rating
+                                  ? accentColor
+                                  : 'rgba(255,255,255,0.2)',
+                            }}
                             aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                           >
                             ★
@@ -665,22 +774,44 @@ export default function SelectedLocationCard({
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => { setReviewState('idle'); setRating(0); setReviewText(''); }}
+                          onClick={() => {
+                            setReviewState('idle');
+                            setRating(0);
+                            setReviewText('');
+                          }}
                           className="flex-1 rounded-[14px] border border-white/15 py-2 text-[13px] text-white/60 transition-colors hover:text-white"
                         >
                           Cancel
                         </button>
                         <motion.button
                           type="submit"
-                          disabled={rating === 0 || reviewState === 'submitting'}
-                          whileHover={rating > 0 && reviewState !== 'submitting' ? { scale: 1.02 } : {}}
-                          whileTap={rating > 0 && reviewState !== 'submitting' ? { scale: 0.97 } : {}}
+                          disabled={
+                            rating === 0 || reviewState === 'submitting'
+                          }
+                          whileHover={
+                            rating > 0 && reviewState !== 'submitting'
+                              ? { scale: 1.02 }
+                              : {}
+                          }
+                          whileTap={
+                            rating > 0 && reviewState !== 'submitting'
+                              ? { scale: 0.97 }
+                              : {}
+                          }
                           className="flex flex-1 items-center justify-center gap-2 rounded-[14px] py-2 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
-                          style={{ background: rating > 0 ? accentColor : `${accentColor}44` }}
+                          style={{
+                            background:
+                              rating > 0 ? accentColor : `${accentColor}44`,
+                          }}
                         >
                           {reviewState === 'submitting' ? (
-                            <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />Submitting…</>
-                          ) : 'Submit Review →'}
+                            <>
+                              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                              Submitting…
+                            </>
+                          ) : (
+                            'Submit Review →'
+                          )}
                         </motion.button>
                       </div>
                     </motion.form>
@@ -693,11 +824,18 @@ export default function SelectedLocationCard({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
                       className="mt-2 flex flex-col items-center gap-1.5 rounded-[14px] py-4 text-center"
-                      style={{ background: `${accentColor}18`, border: `1px solid ${accentColor}33` }}
+                      style={{
+                        background: `${accentColor}18`,
+                        border: `1px solid ${accentColor}33`,
+                      }}
                     >
                       <span className="text-2xl">🎉</span>
-                      <p className="text-sm font-semibold text-white">Review submitted!</p>
-                      <p className="text-[11px] text-white/50">Thanks for sharing your vibe ✨</p>
+                      <p className="text-sm font-semibold text-white">
+                        Review submitted!
+                      </p>
+                      <p className="text-[11px] text-white/50">
+                        Thanks for sharing your vibe ✨
+                      </p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -724,7 +862,10 @@ export default function SelectedLocationCard({
                       {avgRating > 0 && !reviewsLoading && (
                         <span
                           className="ml-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                          style={{ background: `${accentColor}22`, color: accentColor }}
+                          style={{
+                            background: `${accentColor}22`,
+                            color: accentColor,
+                          }}
                         >
                           {avgRating.toFixed(1)} avg
                         </span>
@@ -732,7 +873,11 @@ export default function SelectedLocationCard({
                     </span>
                     <motion.span
                       animate={{ rotate: showReviews ? 180 : 0 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 30,
+                      }}
                       className="text-[10px] text-white/30"
                     >
                       ▼
@@ -746,7 +891,11 @@ export default function SelectedLocationCard({
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 35 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 300,
+                          damping: 35,
+                        }}
                         className="mt-2 space-y-2 overflow-hidden"
                       >
                         {reviews.map((rev) => (
@@ -761,21 +910,30 @@ export default function SelectedLocationCard({
                               <div className="flex items-center gap-1.5">
                                 {/* Star row */}
                                 <span className="flex gap-0.5">
-                                  {[1,2,3,4,5].map((s) => (
+                                  {[1, 2, 3, 4, 5].map((s) => (
                                     <span
                                       key={s}
                                       className="text-[11px]"
-                                      style={{ color: s <= rev.rating ? accentColor : 'rgba(255,255,255,0.15)' }}
+                                      style={{
+                                        color:
+                                          s <= rev.rating
+                                            ? accentColor
+                                            : 'rgba(255,255,255,0.15)',
+                                      }}
                                     >
                                       ★
                                     </span>
                                   ))}
                                 </span>
                                 {rev.author_handle && (
-                                  <span className="text-[11px] text-white/40">{rev.author_handle}</span>
+                                  <span className="text-[11px] text-white/40">
+                                    {rev.author_handle}
+                                  </span>
                                 )}
                               </div>
-                              <span className="shrink-0 text-[10px] text-white/25">{timeAgo(rev.created_at)}</span>
+                              <span className="shrink-0 text-[10px] text-white/25">
+                                {timeAgo(rev.created_at)}
+                              </span>
                             </div>
                             {/* Review text */}
                             {rev.text && (
@@ -799,7 +957,6 @@ export default function SelectedLocationCard({
                     )}
                   </AnimatePresence>
                 </div>
-
               </motion.div>
             )}
           </AnimatePresence>
