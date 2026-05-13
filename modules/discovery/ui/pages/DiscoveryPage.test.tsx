@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DiscoveryPage from './DiscoveryPage';
 import * as discoveryApiModule from '../../infras/discoveryApi';
@@ -13,28 +13,6 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-/** Mock framer-motion to avoid animation issues in test environment */
-vi.mock('framer-motion', async () => {
-  const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion');
-  return {
-    ...actual,
-    motion: {
-      div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-        <div {...props}>{children}</div>
-      ),
-      button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-        <button {...props}>{children}</button>
-      ),
-      article: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
-        <article {...props}>{children}</article>
-      ),
-      span: ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
-        <span {...props}>{children}</span>
-      ),
-    },
-    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  };
-});
 
 /** Minimal public location factory */
 const makeMockFeedPage = (overrides: Partial<PaginatedPublicLocations> = {}): PaginatedPublicLocations => ({
@@ -98,25 +76,24 @@ describe('DiscoveryPage', () => {
   });
 
   it('renders the page heading', async () => {
-    render(<DiscoveryPage />);
+    await act(async () => { render(<DiscoveryPage />); });
     expect(screen.getByRole('heading', { level: 1, name: /discover your vibe/i })).toBeInTheDocument();
   });
 
   it('shows trending section title', async () => {
-    render(<DiscoveryPage />);
+    await act(async () => { render(<DiscoveryPage />); });
     expect(screen.getByText(/trending now/i)).toBeInTheDocument();
   });
 
   it('renders location cards after loading', async () => {
-    render(<DiscoveryPage />);
+    await act(async () => { render(<DiscoveryPage />); });
     await waitFor(() => {
       expect(screen.getByText('Cozy Café Corner')).toBeInTheDocument();
     });
   });
 
-  it('shows skeleton while loading', () => {
-    render(<DiscoveryPage />);
-    // Skeleton count: 6 card skeletons
+  it('shows skeleton while loading', async () => {
+    await act(async () => { render(<DiscoveryPage />); });
     const feed = screen.getByRole('region', { name: /public location feed/i });
     expect(feed).toBeInTheDocument();
   });
@@ -125,7 +102,7 @@ describe('DiscoveryPage', () => {
     vi.spyOn(discoveryApiModule.discoveryRepository, 'getPublicFeed').mockResolvedValue(
       makeMockFeedPage({ data: [], total: 0, hasMore: false }),
     );
-    render(<DiscoveryPage />);
+    await act(async () => { render(<DiscoveryPage />); });
     await waitFor(() => {
       expect(screen.getByText(/nothing here yet/i)).toBeInTheDocument();
     });
@@ -135,10 +112,11 @@ describe('DiscoveryPage', () => {
     vi.spyOn(discoveryApiModule.discoveryRepository, 'getPublicFeed').mockResolvedValue(
       makeMockFeedPage({ data: [], total: 0, hasMore: false }),
     );
-    render(<DiscoveryPage />);
-    // Click a mood pill
+    await act(async () => { render(<DiscoveryPage />); });
+
+    // Click a mood pill inside act to capture the resulting state update
     const happyPill = screen.getByRole('button', { name: /happy/i });
-    fireEvent.click(happyPill);
+    await act(async () => { fireEvent.click(happyPill); });
 
     await waitFor(() => {
       expect(screen.getByText(/no spots match this vibe/i)).toBeInTheDocument();
@@ -150,7 +128,7 @@ describe('DiscoveryPage', () => {
     vi.spyOn(discoveryApiModule.discoveryRepository, 'getPublicFeed').mockRejectedValue(
       new Error('API Error'),
     );
-    render(<DiscoveryPage />);
+    await act(async () => { render(<DiscoveryPage />); });
     await waitFor(() => {
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
     });
@@ -158,11 +136,11 @@ describe('DiscoveryPage', () => {
   });
 
   it('filters cards by search query', async () => {
-    render(<DiscoveryPage />);
+    await act(async () => { render(<DiscoveryPage />); });
     await waitFor(() => screen.getByText('Cozy Café Corner'));
 
     const searchInput = screen.getByRole('searchbox');
-    fireEvent.change(searchInput, { target: { value: 'xyz_nonexistent' } });
+    await act(async () => { fireEvent.change(searchInput, { target: { value: 'xyz_nonexistent' } }); });
 
     await waitFor(() => {
       expect(screen.queryByText('Cozy Café Corner')).not.toBeInTheDocument();

@@ -22,7 +22,6 @@ interface NavItem {
  */
 const NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/', icon: '🏠' },
-  { label: 'Mood', href: '/mood', icon: '✨' },
   { label: 'Discover', href: '/discover', icon: '🔍' },
   { label: 'Map', href: '/map', icon: '🗺️' },
 ];

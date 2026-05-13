@@ -45,7 +45,7 @@ const MoodInputPanel = dynamic(
  * Props for the MapPage component.
  * Flags are injected from the routing shell — enabling full server-side flag resolution.
  */
-/** Mood search query forwarded from the /mood page */
+/** Mood search query forwarded from the home page or a direct /map link */
 export interface MoodQuery {
   inputType: 'text' | 'emoji';
   text?: string;
@@ -64,7 +64,7 @@ export interface MapPageProps {
    */
   initialSelectedMarker?: MapMarkerData | null;
   /**
-   * Mood search query forwarded from /mood.
+   * Mood search query forwarded from the home page or a direct link.
    * When present, MapPage calls the mood-match API and shows results as markers.
    */
   moodQuery?: MoodQuery | null;

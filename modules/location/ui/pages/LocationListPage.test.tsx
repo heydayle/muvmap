@@ -17,6 +17,15 @@ vi.mock('../../infras/locationApi', () => ({
   },
 }));
 
+/**
+ * LocationForm → MapPicker imports maplibre-gl/dist/maplibre-gl.css which
+ * Vite can't resolve in jsdom. Stub it to a no-op div — the heading and
+ * back button are rendered by LocationListPage itself, not LocationForm.
+ */
+vi.mock('../components/LocationForm', () => ({
+  default: () => <div data-testid="location-form-stub" />,
+}));
+
 /** Creates a fresh QueryClient per test. */
 function createWrapper() {
   const queryClient = new QueryClient({

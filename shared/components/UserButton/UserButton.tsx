@@ -13,7 +13,6 @@ import { useEffect, useRef, useState } from 'react';
  */
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: '🏠' },
-  { label: 'Mood', href: '/mood', icon: '✨' },
   { label: 'Discover', href: '/discover', icon: '🔍' },
   { label: 'Map', href: '/map', icon: '🗺️' },
 ] as const;
@@ -26,7 +25,7 @@ interface UserButtonProps {
  * UserButton — unified top-right header combining site navigation and auth.
  *
  * Renders a single glassmorphism pill containing:
- * - Nav links (Home, Mood, Discover, Map) with active-route highlight
+ * - Nav links (Home, Discover, Map) with active-route highlight
  * - A divider
  * - Auth control: "✦ Sign in" button (guest) or avatar + dropdown (authenticated)
  *

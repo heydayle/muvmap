@@ -43,7 +43,7 @@ export async function generateMetadata({ searchParams }: MapRouteProps): Promise
  * Deep-link params (set by Discovery page on card click):
  *   ?id=...&lat=...&lng=...&name=...&mood=...&tags=...
  *
- * Mood-search params (set by Mood page on submit):
+ * Mood-search params (set by the home page MoodInputPanel on submit):
  *   ?q=I+want+something+cozy&type=text
  *   ?emoji=😌,🧘&type=emoji
  */
@@ -91,7 +91,7 @@ export default async function MapRoute({ searchParams }: MapRouteProps) {
   }
 
   /**
-   * Parse mood-search query forwarded from the /mood page.
+   * Parse mood-search query forwarded from the home page.
    * When present, MapPage will call the mood-match API and show results as markers.
    */
   const moodQuery: { text?: string; emoji?: string[]; inputType: 'text' | 'emoji' } | null =
