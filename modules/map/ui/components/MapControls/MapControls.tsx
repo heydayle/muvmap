@@ -2,16 +2,13 @@
 
 import { cn } from '@/shared/utils/cn';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Bookmark } from 'lucide-react';
 import { UserLocationStatus } from '../../hooks/useUserLocation';
 
 /**
  * Props for the MapControls component.
  */
 export interface MapControlsProps {
-  /** Whether heatmap overlay is currently visible */
-  heatmapActive: boolean;
-  /** Whether 3D mode is currently active */
-  is3DActive: boolean;
   /** Geolocation status for the "Locate Me" button */
   locationStatus: UserLocationStatus;
   /** Feature flags controlling which buttons are shown */
@@ -20,12 +17,12 @@ export interface MapControlsProps {
     heatmap_enabled: boolean;
     map_3d_enabled: boolean;
   };
-  /** Called to toggle the heatmap overlay */
-  onToggleHeatmap: () => void;
-  /** Called to toggle 3D mode */
-  onToggle3D: () => void;
   /** Called to trigger GPS location */
   onLocateMe: () => void;
+  /** Whether the saved list panel is currently shown */
+  savedListActive: boolean;
+  /** Called to toggle the saved list panel */
+  onToggleSavedList: () => void;
 }
 
 /**
@@ -84,21 +81,13 @@ function ControlButton({
  * @returns Control panel JSX
  */
 export default function MapControls({
-  heatmapActive,
-  is3DActive,
   locationStatus,
   flags,
-  onToggleHeatmap,
-  onToggle3D,
   onLocateMe,
+  savedListActive,
+  onToggleSavedList,
 }: MapControlsProps) {
-  const hasAnyControl =
-    flags.user_location_enabled ||
-    flags.heatmap_enabled ||
-    flags.map_3d_enabled;
-
-  if (!hasAnyControl) return null;
-
+  // The panel always renders — at minimum the saved-list bookmark button is present.
   return (
     <AnimatePresence>
       <motion.div
@@ -108,6 +97,31 @@ export default function MapControls({
         className="absolute right-4 bottom-4 z-30 flex flex-col gap-2"
         aria-label="Map controls"
       >
+        {/* Saved list toggle — always visible */}
+        <motion.button
+          id="map-control-saved-list"
+          type="button"
+          aria-label="View your saved places"
+          aria-pressed={savedListActive}
+          onClick={onToggleSavedList}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.93 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className={cn(
+            'flex h-10 w-10 cursor-pointer items-center justify-center rounded-[12px]',
+            'border text-base transition-all duration-200',
+            savedListActive
+              ? 'border-violet-500/60 bg-violet-500/20 text-violet-300 shadow-[0_0_12px_rgba(167,139,250,0.35)]'
+              : 'border-border-glass bg-surface-glass text-text-secondary backdrop-blur-[16px]',
+            'hover:border-violet-500/60 hover:text-violet-300',
+          )}
+        >
+          <Bookmark
+            className={cn('h-4 w-4', savedListActive ? 'fill-current' : '')}
+            aria-hidden="true"
+          />
+        </motion.button>
+
         {flags.user_location_enabled && (
           <ControlButton
             id="map-control-locate"
@@ -116,26 +130,6 @@ export default function MapControls({
             loading={locationStatus === 'requesting'}
             active={locationStatus === 'success'}
             onClick={onLocateMe}
-          />
-        )}
-
-        {flags.heatmap_enabled && (
-          <ControlButton
-            id="map-control-heatmap"
-            label="Toggle heatmap"
-            emoji="🔥"
-            active={heatmapActive}
-            onClick={onToggleHeatmap}
-          />
-        )}
-
-        {flags.map_3d_enabled && (
-          <ControlButton
-            id="map-control-3d"
-            label="Toggle 3D mode"
-            emoji="🏔️"
-            active={is3DActive}
-            onClick={onToggle3D}
           />
         )}
       </motion.div>

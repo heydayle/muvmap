@@ -11,6 +11,7 @@ import { resolveMapStyle } from '../../../core/usecases/resolveMapStyle';
 import { mapRepository } from '../../../infras/mapApi';
 import { useMap } from '../../hooks/useMap';
 import { useMapMarkers } from '../../hooks/useMapMarkers';
+import UserLocationDot from '../UserLocationDot';
 
 /**
  * Props for the MapView component.
@@ -54,6 +55,12 @@ export interface MapViewProps {
   pendingPinLngLat?: [number, number] | null;
   /** Additional CSS class names for the container */
   className?: string;
+  /**
+   * User's GPS position as [longitude, latitude].
+   * When set and `flags.user_location_enabled` is true, renders a pulsing
+   * blue dot on the map at this coordinate.
+   */
+  userPosition?: [number, number] | null;
 }
 
 /**
@@ -78,6 +85,7 @@ export default function MapView({
   onMapClickCoords,
   pendingPinLngLat,
   className,
+  userPosition,
 }: MapViewProps) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [markers, setMarkers] = useState<MapMarkerData[]>([]);
@@ -240,6 +248,14 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapLoaded, pendingPinLngLat]);
 
+  /** Fly to the user's GPS position the first time it arrives */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded || !userPosition) return;
+    map.flyTo({ center: userPosition, zoom: 15, duration: 1000 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPosition]); // only on position change; mapRef and mapLoaded are stable
+
   return (
     <div className={cn('relative w-full h-full overflow-hidden', className)}>
       {/* Map canvas */}
@@ -249,6 +265,11 @@ export default function MapView({
         aria-label="Interactive map"
         role="application"
       />
+
+      {/* Pulsing blue dot at the user's GPS position */}
+      {flags.user_location_enabled && (
+        <UserLocationDot map={mapRef.current} position={userPosition ?? null} />
+      )}
 
       {/* Mood color overlay — mix-blend-mode creates a tinted feel */}
       {flags.map_mood_theme_enabled && moodOverlayColor !== 'transparent' && (

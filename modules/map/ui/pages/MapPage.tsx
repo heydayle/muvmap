@@ -11,12 +11,14 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_MAP_FLAGS, MapFeatureFlags } from '../../core/models/mapFlags';
+import { OPENFREEMAP_STYLES } from '../../core/models/mapConfig';
 import { MapMarkerData } from '../../core/models/mapMarker';
 import AddLocationCard from '../components/AddLocationCard/AddLocationCard';
 import MapControls from '../components/MapControls';
 import MapFallback from '../components/MapFallback';
 import SelectedLocationCard from '../components/SelectedLocationCard';
 import { useUserLocation } from '../hooks/useUserLocation';
+const SavedListPanel = dynamic(() => import('../components/SavedListPanel'), { ssr: false });
 
 /**
  * MapView loaded dynamically to avoid SSR issues with MapLibre GL.
@@ -31,9 +33,6 @@ const MapView = dynamic(() => import('../components/MapView'), {
   ),
 });
 
-const UserLocationDot = dynamic(() => import('../components/UserLocationDot'), {
-  ssr: false,
-});
 
 /** MoodInputPanel loaded dynamically — avoids pulling framer-motion into the initial map bundle */
 const MoodInputPanel = dynamic(
@@ -109,8 +108,6 @@ export default function MapPage({
         : prev,
     );
   }, []);
-  const [heatmapActive, setHeatmapActive] = useState(false);
-  const [is3DActive, setIs3DActive] = useState(false);
 
   // ── Text search ─────────────────────────────────────────────────────────
   const [searchText, setSearchText] = useState('');
@@ -152,8 +149,55 @@ export default function MapPage({
   } | null>(null);
   const [moodLoading, setMoodLoading] = useState(!!moodQuery);
 
-  // Search results take priority over mood results; both override bounds markers
-  const overrideMarkers = searchMarkers ?? moodMarkers ?? undefined;
+  /** Whether the saved list panel is open */
+  const [showSavedList, setShowSavedList] = useState(false);
+  const [savedMarkers, setSavedMarkers] = useState<MapMarkerData[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+
+  /**
+   * Fetches the user's saved location list from the API.
+   * Called the first time the saved panel is opened and on subsequent opens.
+   */
+  const fetchSavedList = useCallback(async () => {
+    setSavedLoading(true);
+    try {
+      const res = await fetch('/api/map/saved');
+      const data = await res.json();
+      setSavedMarkers(data.locations ?? []);
+    } catch {
+      setSavedMarkers([]);
+    } finally {
+      setSavedLoading(false);
+    }
+  }, []);
+
+  /** Toggle the saved list panel — fetches data on first open */
+  const toggleSavedList = useCallback(() => {
+    setShowSavedList((prev) => {
+      const next = !prev;
+      if (next) fetchSavedList();
+      return next;
+    });
+    // Clear other overlays when entering saved mode
+    setSelectedMarker(null);
+    setPendingPin(null);
+  }, [fetchSavedList]);
+
+  /**
+   * Called when a saved list item is clicked.
+   * Flies to the location and opens SelectedLocationCard.
+   * The saved list panel remains open — the card appears on top of it.
+   */
+  const handleSavedItemClick = useCallback((marker: MapMarkerData) => {
+    setSelectedMarker(marker);
+    flyToRef.current?.({
+      center: marker.lngLat,
+      zoom: 15,
+    });
+  }, []);
+
+  // Search results > saved list > mood results > bounds markers
+  const overrideMarkers = searchMarkers ?? (showSavedList ? savedMarkers : null) ?? moodMarkers ?? undefined;
 
   /** Whether the floating mood search panel is open */
   const [showMoodPanel, setShowMoodPanel] = useState(false);
@@ -352,21 +396,6 @@ export default function MapPage({
     [initialSelectedMarker],
   );
 
-  /**
-   * Toggles the 3D pitch mode.
-   * Pitch 60° = 3D angled view, 0° = flat 2D.
-   */
-  const handleToggle3D = useCallback(() => {
-    setIs3DActive((prev) => !prev);
-  }, []);
-
-  /**
-   * Toggles the heatmap overlay.
-   */
-  const handleToggleHeatmap = useCallback(() => {
-    setHeatmapActive((prev) => !prev);
-  }, []);
-
   // ── Fallback: map rendering is disabled ──────────────────────────────────
   if (!flags.map_render_enabled) {
     return (
@@ -396,8 +425,8 @@ export default function MapPage({
         flags={flags}
         activeMood={activeMood}
         initialCamera={{
-          zoom: is3DActive ? 14 : 12,
-          pitch: is3DActive ? 60 : 0,
+          zoom: 12,
+          style: OPENFREEMAP_STYLES.dark,
           ...(initialSelectedMarker && {
             center: initialSelectedMarker.lngLat,
             zoom: 15,
@@ -409,6 +438,7 @@ export default function MapPage({
         overrideMarkers={overrideMarkers}
         onMapClickCoords={handleMapClickCoords}
         pendingPinLngLat={pendingPin}
+        userPosition={userPosition}
         className="absolute inset-0 z-0"
       />
 
@@ -583,32 +613,38 @@ export default function MapPage({
         </motion.div>
       )}
 
-      {/* User GPS dot */}
-      {flags.user_location_enabled && locationStatus === 'success' && (
-        <UserLocationDot map={null} position={userPosition} />
-      )}
-
       {/* Floating control panel */}
       <MapControls
-        heatmapActive={heatmapActive}
-        is3DActive={is3DActive}
         locationStatus={locationStatus}
         flags={{
           user_location_enabled: flags.user_location_enabled,
           heatmap_enabled: flags.heatmap_enabled,
           map_3d_enabled: flags.map_3d_enabled,
         }}
-        onToggleHeatmap={handleToggleHeatmap}
-        onToggle3D={handleToggle3D}
         onLocateMe={requestLocation}
+        savedListActive={showSavedList}
+        onToggleSavedList={toggleSavedList}
       />
 
-      {/* Selected location bottom card */}
+      {/* Saved list panel — shown when bookmark button is active */}
+      <AnimatePresence>
+        {showSavedList && (
+          <SavedListPanel
+            locations={savedMarkers}
+            loading={savedLoading}
+            onLocationClick={handleSavedItemClick}
+            onClose={() => setShowSavedList(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Selected location bottom card — shows on top of saved list when both are active */}
       <SelectedLocationCard
         marker={selectedMarker}
         onDismiss={handleDismissCard}
         onUpdate={handleMarkerUpdate}
         onViewDetails={handleViewDetails}
+        onSaveChange={() => { if (showSavedList) fetchSavedList(); }}
       />
 
       {/* Add location card — appears when user clicks empty map space */}

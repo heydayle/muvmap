@@ -1,11 +1,13 @@
 'use client';
 
 import { useUser } from '@/shared/hooks/useUser';
+import { useLocationGuard } from '@/shared/hooks/useLocationGuard';
 import type { MoodCategory } from '@/shared/types';
 import { cn } from '@/shared/utils/cn';
 import { ensureSession } from '@/shared/utils/ensureSession';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Bookmark,
   Check,
   ChevronDown,
   Heart,
@@ -74,6 +76,8 @@ export interface SelectedLocationCardProps {
   onDismiss: () => void;
   onUpdate?: (updated: MapMarkerData) => void;
   onViewDetails?: (marker: MapMarkerData) => void;
+  /** Called after a confirmed save or unsave — useful for refreshing external lists */
+  onSaveChange?: (locationId: string, saved: boolean) => void;
 }
 
 type ReviewState = 'idle' | 'open' | 'submitting' | 'submitted';
@@ -101,6 +105,7 @@ export default function SelectedLocationCard({
   marker,
   onDismiss,
   onUpdate,
+  onSaveChange,
 }: SelectedLocationCardProps) {
   const { user } = useUser();
   const isCreator = !!(user && marker?.user_id && user.id === marker.user_id);
@@ -129,6 +134,14 @@ export default function SelectedLocationCard({
   const [likeCount, setLikeCount] = useState(0);
   const [liking, setLiking] = useState(false);
 
+  // ── Save (bookmark) state ──────────────────────────────────────────────
+  const [savedInList, setSavedInList] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const { hasHitLimit, limitMessage } = useLocationGuard({ currentCount: savedCount });
+
   /** Fetch current like status whenever the opened marker changes */
   useEffect(() => {
     if (!marker?.id) return;
@@ -145,6 +158,26 @@ export default function SelectedLocationCard({
       .catch(() => {
         /* silently ignore */
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [marker?.id]);
+
+  /** Fetch saved status + count whenever the opened marker changes */
+  useEffect(() => {
+    setSavedInList(false);
+    setSavedCount(0);
+    setSaveError('');
+    if (!marker?.id) return;
+    let cancelled = false;
+    fetch(`/api/map/saved?location_id=${marker.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setSavedInList(data.saved);
+        setSavedCount(data.saved_count);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -174,6 +207,81 @@ export default function SelectedLocationCard({
       setLiking(false);
     }
   }, [marker?.id, liked, liking]);
+
+  /** Toggles save/unsave for the current location. */
+  const handleSaveToggle = useCallback(async () => {
+    if (!marker?.id || saving) return;
+    setSaveError('');
+
+    // Unsave path — always allowed regardless of limit
+    if (savedInList) {
+      const wasSaved = savedInList;
+      setSavedInList(false);
+      setSavedCount((c) => Math.max(0, c - 1));
+      setSaving(true);
+      try {
+        await ensureSession();
+        const res = await fetch('/api/map/saved', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ location_id: marker.id }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setSavedCount(data.saved_count ?? 0);
+        onSaveChange?.(marker.id, false);
+      } catch {
+        // Revert on failure
+        setSavedInList(wasSaved);
+        setSavedCount((c) => c + 1);
+        setSaveError('Failed to unsave. Please try again.');
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    // Save path — block if limit hit
+    if (hasHitLimit) {
+      setSaveError(limitMessage);
+      setTimeout(() => setSaveError(''), 6000);
+      return;
+    }
+
+    // Optimistic save
+    setSavedInList(true);
+    setSavedCount((c) => c + 1);
+    setSaving(true);
+    try {
+      await ensureSession();
+      const res = await fetch('/api/map/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location_id: marker.id }),
+      });
+      if (res.status === 429) {
+        // Limit enforced by server
+        const errData = await res.json().catch(() => ({}));
+        setSavedInList(false);
+        setSavedCount((c) => Math.max(0, c - 1));
+        setSaveError(errData.message ?? limitMessage);
+        setTimeout(() => setSaveError(''), 6000);
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setSavedCount(data.saved_count ?? 0);
+      onSaveChange?.(marker.id, true);
+    } catch {
+      // Revert on failure
+      setSavedInList(false);
+      setSavedCount((c) => Math.max(0, c - 1));
+      setSaveError('Failed to save. Please try again.');
+      setTimeout(() => setSaveError(''), 4000);
+    } finally {
+      setSaving(false);
+    }
+  }, [marker?.id, savedInList, saving, hasHitLimit, limitMessage, onSaveChange]);
 
   // ── Reviews list state ────────────────────────────────────────────
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
@@ -716,6 +824,40 @@ export default function SelectedLocationCard({
                     </AnimatePresence>
                     <span className="tabular-nums">{likeCount}</span>
                   </motion.button>
+
+                  {/* Bookmark / Save button */}
+                  <motion.button
+                    type="button"
+                    id="save-location-btn"
+                    onClick={handleSaveToggle}
+                    disabled={saving}
+                    whileTap={!saving ? { scale: 1.2 } : {}}
+                    aria-label={savedInList ? 'Remove from saved list' : 'Save to your list'}
+                    aria-pressed={savedInList}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 rounded-[12px] border px-3.5 py-2 text-[13px] font-semibold transition-all disabled:cursor-not-allowed',
+                      savedInList
+                        ? 'border-violet-500/40 bg-violet-500/15 text-violet-300'
+                        : 'border-white/15 text-white/70 hover:border-white/30 hover:text-white',
+                    )}
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.span
+                        key={savedInList ? 'saved' : 'unsaved'}
+                        initial={{ scale: 0.4, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.4, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                        aria-hidden="true"
+                        className="flex items-center justify-center"
+                      >
+                        <Bookmark
+                          className={cn('h-4 w-4', savedInList ? 'fill-current text-white' : '')}
+                        />
+                      </motion.span>
+                    </AnimatePresence>
+                  </motion.button>
+
                   {/* Share button */}
                   <motion.button
                     type="button"
@@ -751,6 +893,23 @@ export default function SelectedLocationCard({
                     </button>
                   )}
                 </div>
+
+                {/* Save error / limit warning */}
+                <AnimatePresence>
+                  {saveError && (
+                    <motion.div
+                      key="save-error"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="mb-3 rounded-[10px] border border-amber-500/30 bg-amber-500/10 px-3 py-2"
+                    >
+                      <p className="text-[11px] leading-relaxed text-amber-300">
+                        🗂️ {saveError}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* ── Review UI ──────────────────────────────────────────── */}
                 <AnimatePresence mode="wait">
