@@ -63,6 +63,14 @@ export interface SelectedLocationCardProps {
 type ReviewState = 'idle' | 'open' | 'submitting' | 'submitted';
 type EditState   = 'idle' | 'editing' | 'saving' | 'saved';
 
+interface MediaItem {
+  id: string;
+  location_id: string;
+  title: string;
+  image_url: string;
+  created_at: string;
+}
+
 /** Shape of a single review row from GET /api/reviews */
 interface ReviewRow {
   id: string;
@@ -177,6 +185,36 @@ export default function SelectedLocationCard({
       .finally(() => { if (!cancelled) setReviewsLoading(false); });
     return () => { cancelled = true; };
   }, [marker?.id]);
+
+  // ── Media list state ────────────────────────────────────────────
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+
+  useEffect(() => {
+    if (!marker?.id) return;
+    setMediaItems([]);
+    setMediaLoading(true);
+    let cancelled = false;
+    
+    const mediaAppUrl = process.env.NEXT_PUBLIC_MEDIA_APP_URL;
+    if (!mediaAppUrl) {
+      setMediaLoading(false);
+      return;
+    }
+
+    fetch(`${mediaAppUrl}/api/media?location_id=${marker.id}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (cancelled || !json) return;
+        setMediaItems(json.data ?? []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch media:', err);
+      })
+      .finally(() => { if (!cancelled) setMediaLoading(false); });
+    return () => { cancelled = true; };
+  }, [marker?.id]);
+
 
   // ── Start edit ────────────────────────────────────────────────────────────
   function openEdit() {
@@ -308,32 +346,75 @@ export default function SelectedLocationCard({
     window.open(directionsUrl, '_blank', 'noopener,noreferrer');
   }
 
-  if (!marker) return null;
-
   const editAccent = editMood ? (MOOD_HEX[editMood] ?? '#fff') : '#fff';
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key={`loc-card-${marker.id}`}
-        initial={{ y: '110%', opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: '110%', opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-        className={cn(
-          'absolute bottom-4 left-1/2 z-40 w-[calc(100%-2rem)] -translate-x-1/2',
-          'md:w-[400px]',
-          'overflow-hidden rounded-[22px] border border-white/12 bg-black/65 backdrop-blur-[28px]',
-          'shadow-[0_24px_64px_rgba(0,0,0,0.55)]',
-        )}
-        role="region"
-        aria-label={`Location: ${marker.name}`}
-      >
-        {/* Accent top bar */}
+    <AnimatePresence mode="wait">
+      {marker && (
+        <motion.div
+          key={`loc-card-${marker.id}`}
+          initial={{ y: '110%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '110%', opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+          className={cn(
+            'absolute bottom-4 left-1/2 z-40 w-[calc(100%-2rem)] -translate-x-1/2',
+            'md:w-[400px]',
+            'overflow-hidden rounded-[22px] border border-white/12 bg-black/65 backdrop-blur-[28px]',
+            'shadow-[0_24px_64px_rgba(0,0,0,0.55)]',
+          )}
+          role="region"
+          aria-label={`Location: ${marker.name}`}
+        >
+          {/* Accent top bar */}
         <div
           className="h-[3px] w-full"
           style={{ background: `linear-gradient(90deg, ${accentColor}, ${accentColor}33)` }}
         />
+        {/* ── Media Carousel ────────────────────────────────────────────── */}
+        {mediaLoading ? (
+          <div className="w-full aspect-video bg-white/5 animate-pulse" />
+        ) : mediaItems.length > 0 ? (
+          <div className="relative w-full aspect-video flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            {mediaItems.map((media) => (
+              <a
+                key={media.id}
+                href={`${process.env.NEXT_PUBLIC_MEDIA_APP_URL || 'http://localhost:3001'}?location_id=${marker.id}&location_name=${encodeURIComponent(marker.name)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full h-full shrink-0 snap-center relative block group"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={media.image_url}
+                  alt={media.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold text-white border border-white/30">
+                    Open in MediaApp ↗
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="w-full aspect-video bg-white/5 flex flex-col items-center justify-center gap-3 border-b border-white/10">
+            <span className="text-sm text-gray-400">No photos yet</span>
+            <a 
+              href={`${process.env.NEXT_PUBLIC_MEDIA_APP_URL || 'http://localhost:3001'}?location_id=${marker.id}&location_name=${encodeURIComponent(marker.name)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-semibold transition-colors flex items-center gap-2"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Add Photo
+            </a>
+          </div>
+        )}
 
         <div className="p-5">
           {/* ── Header ───────────────────────────────────────────────────── */}
@@ -804,7 +885,8 @@ export default function SelectedLocationCard({
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }

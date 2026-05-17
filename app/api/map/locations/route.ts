@@ -88,6 +88,22 @@ export async function POST(request: NextRequest) {
 
       if (error) throw error;
 
+      // ── WEBHOOK TO MISSYOU (Fire and forget) ─────────────────────────────
+      const webhookUrl = process.env.MISSYOU_WEBHOOK_URL;
+      const webhookSecret = process.env.MISSYOU_WEBHOOK_SECRET;
+      
+      if (webhookUrl && webhookSecret) {
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${webhookSecret}`,
+          },
+          body: JSON.stringify(data),
+        }).catch((err) => console.error('[Webhook] Failed to sync to Missyou:', err));
+      }
+      // ───────────────────────────────────────────────────────────────────────
+
       const marker: MapMarkerData = {
         id: data.id,
         lngLat: [data.longitude, data.latitude],
