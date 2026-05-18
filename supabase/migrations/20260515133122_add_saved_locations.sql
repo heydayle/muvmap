@@ -8,7 +8,7 @@
 
 CREATE TABLE IF NOT EXISTS saved_locations (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
   saved_at    TIMESTAMPTZ DEFAULT now(),
   UNIQUE (user_id, location_id)
