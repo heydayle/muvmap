@@ -11,12 +11,14 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_MAP_FLAGS, MapFeatureFlags } from '../../core/models/mapFlags';
+import { OPENFREEMAP_STYLES } from '../../core/models/mapConfig';
 import { MapMarkerData } from '../../core/models/mapMarker';
 import AddLocationCard from '../components/AddLocationCard/AddLocationCard';
 import MapControls from '../components/MapControls';
 import MapFallback from '../components/MapFallback';
 import SelectedLocationCard from '../components/SelectedLocationCard';
 import { useUserLocation } from '../hooks/useUserLocation';
+const SavedListPanel = dynamic(() => import('../components/SavedListPanel'), { ssr: false });
 
 /**
  * MapView loaded dynamically to avoid SSR issues with MapLibre GL.
@@ -31,9 +33,6 @@ const MapView = dynamic(() => import('../components/MapView'), {
   ),
 });
 
-const UserLocationDot = dynamic(() => import('../components/UserLocationDot'), {
-  ssr: false,
-});
 
 /** MoodInputPanel loaded dynamically — avoids pulling framer-motion into the initial map bundle */
 const MoodInputPanel = dynamic(
@@ -45,7 +44,7 @@ const MoodInputPanel = dynamic(
  * Props for the MapPage component.
  * Flags are injected from the routing shell — enabling full server-side flag resolution.
  */
-/** Mood search query forwarded from the /mood page */
+/** Mood search query forwarded from the home page or a direct /map link */
 export interface MoodQuery {
   inputType: 'text' | 'emoji';
   text?: string;
@@ -64,7 +63,7 @@ export interface MapPageProps {
    */
   initialSelectedMarker?: MapMarkerData | null;
   /**
-   * Mood search query forwarded from /mood.
+   * Mood search query forwarded from the home page or a direct link.
    * When present, MapPage calls the mood-match API and shows results as markers.
    */
   moodQuery?: MoodQuery | null;
@@ -100,29 +99,37 @@ export default function MapPage({
   const handleMarkerUpdate = useCallback((updated: MapMarkerData) => {
     setSelectedMarker(updated);
     // Also patch it in the mood markers list if it came from a mood search
+    // eslint-disable-next-line react-hooks/immutability
     setMoodMarkers((prev) =>
-      prev ? prev.map((m) => (m.id === updated.id ? { ...updated, state: m.state } : m)) : prev,
+      prev
+        ? prev.map((m) =>
+            m.id === updated.id ? { ...updated, state: m.state } : m,
+          )
+        : prev,
     );
   }, []);
-  const [heatmapActive, setHeatmapActive] = useState(false);
-  const [is3DActive, setIs3DActive] = useState(false);
 
   // ── Text search ─────────────────────────────────────────────────────────
-  const [searchText, setSearchText]       = useState('');
+  const [searchText, setSearchText] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchMarkers, setSearchMarkers] = useState<MapMarkerData[] | null>(null);
+  const [searchMarkers, setSearchMarkers] = useState<MapMarkerData[] | null>(
+    null,
+  );
 
   /** Debounced effect: fetch markers matching the search text */
   useEffect(() => {
     const trimmed = searchText.trim();
     if (!trimmed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchMarkers(null);
       return;
     }
     setSearchLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/map/markers?q=${encodeURIComponent(trimmed)}`);
+        const res = await fetch(
+          `/api/map/markers?q=${encodeURIComponent(trimmed)}`,
+        );
         const data: MapMarkerData[] = await res.json();
         setSearchMarkers(data);
       } catch {
@@ -142,8 +149,55 @@ export default function MapPage({
   } | null>(null);
   const [moodLoading, setMoodLoading] = useState(!!moodQuery);
 
-  // Search results take priority over mood results; both override bounds markers
-  const overrideMarkers = searchMarkers ?? moodMarkers ?? undefined;
+  /** Whether the saved list panel is open */
+  const [showSavedList, setShowSavedList] = useState(false);
+  const [savedMarkers, setSavedMarkers] = useState<MapMarkerData[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+
+  /**
+   * Fetches the user's saved location list from the API.
+   * Called the first time the saved panel is opened and on subsequent opens.
+   */
+  const fetchSavedList = useCallback(async () => {
+    setSavedLoading(true);
+    try {
+      const res = await fetch('/api/map/saved');
+      const data = await res.json();
+      setSavedMarkers(data.locations ?? []);
+    } catch {
+      setSavedMarkers([]);
+    } finally {
+      setSavedLoading(false);
+    }
+  }, []);
+
+  /** Toggle the saved list panel — fetches data on first open */
+  const toggleSavedList = useCallback(() => {
+    setShowSavedList((prev) => {
+      const next = !prev;
+      if (next) fetchSavedList();
+      return next;
+    });
+    // Clear other overlays when entering saved mode
+    setSelectedMarker(null);
+    setPendingPin(null);
+  }, [fetchSavedList]);
+
+  /**
+   * Called when a saved list item is clicked.
+   * Flies to the location and opens SelectedLocationCard.
+   * The saved list panel remains open — the card appears on top of it.
+   */
+  const handleSavedItemClick = useCallback((marker: MapMarkerData) => {
+    setSelectedMarker(marker);
+    flyToRef.current?.({
+      center: marker.lngLat,
+      zoom: 15,
+    });
+  }, []);
+
+  // Search results > saved list > mood results > bounds markers
+  const overrideMarkers = searchMarkers ?? (showSavedList ? savedMarkers : null) ?? moodMarkers ?? undefined;
 
   /** Whether the floating mood search panel is open */
   const [showMoodPanel, setShowMoodPanel] = useState(false);
@@ -156,6 +210,7 @@ export default function MapPage({
    */
   useEffect(() => {
     if (!moodQuery) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMoodLoading(true);
     fetch('/api/mood-match', {
       method: 'POST',
@@ -219,6 +274,7 @@ export default function MapPage({
    * Also updates the URL so the result is shareable / reload-safe.
    */
   const searchMoodOnMap = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     async (input: MoodMatchInput) => {
       setIsSearching(true);
       setShowMoodPanel(false);
@@ -307,10 +363,11 @@ export default function MapPage({
    * Called after the user successfully saves a new location.
    * Adds it to the visible markers so it appears on map immediately.
    */
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleLocationSaved = useCallback((newMarker: MapMarkerData) => {
     setPendingPin(null);
     // Append to moodMarkers if in mood mode, otherwise add to override list
-    setMoodMarkers((prev) => prev ? [...prev, newMarker] : [newMarker]);
+    setMoodMarkers((prev) => (prev ? [...prev, newMarker] : [newMarker]));
     setSelectedMarker(newMarker);
   }, []);
 
@@ -339,21 +396,6 @@ export default function MapPage({
     [initialSelectedMarker],
   );
 
-  /**
-   * Toggles the 3D pitch mode.
-   * Pitch 60° = 3D angled view, 0° = flat 2D.
-   */
-  const handleToggle3D = useCallback(() => {
-    setIs3DActive((prev) => !prev);
-  }, []);
-
-  /**
-   * Toggles the heatmap overlay.
-   */
-  const handleToggleHeatmap = useCallback(() => {
-    setHeatmapActive((prev) => !prev);
-  }, []);
-
   // ── Fallback: map rendering is disabled ──────────────────────────────────
   if (!flags.map_render_enabled) {
     return (
@@ -362,6 +404,15 @@ export default function MapPage({
       </motion.main>
     );
   }
+
+  const onClearMood = () => {
+    setMoodLabel(null);
+    setMoodMarkers(null);
+    flyToRef.current?.({
+      center: userPosition!,
+      zoom: 12,
+    });
+  };
 
   // ── Main map experience ───────────────────────────────────────────────────
   return (
@@ -374,8 +425,8 @@ export default function MapPage({
         flags={flags}
         activeMood={activeMood}
         initialCamera={{
-          zoom: is3DActive ? 14 : 12,
-          pitch: is3DActive ? 60 : 0,
+          zoom: 12,
+          style: OPENFREEMAP_STYLES.dark,
           ...(initialSelectedMarker && {
             center: initialSelectedMarker.lngLat,
             zoom: 15,
@@ -387,6 +438,7 @@ export default function MapPage({
         overrideMarkers={overrideMarkers}
         onMapClickCoords={handleMapClickCoords}
         pendingPinLngLat={pendingPin}
+        userPosition={userPosition}
         className="absolute inset-0 z-0"
       />
 
@@ -408,7 +460,7 @@ export default function MapPage({
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={springPresets.smooth}
-          className="absolute left-1/2 top-4 z-30 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2"
+          className="absolute left-4 right-4 top-[68px] z-30 sm:left-1/2 sm:right-auto 2xl:top-4 sm:w-[min(420px,calc(100vw-2rem))] sm:-translate-x-1/2"
           aria-label="Location search and mood widget"
         >
           <div className="overflow-hidden rounded-[20px] border border-border-glass bg-surface-glass shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-[20px]">
@@ -417,7 +469,9 @@ export default function MapPage({
               <span className="shrink-0 text-sm text-white/40">
                 {searchLoading ? (
                   <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white/70" />
-                ) : '🔍'}
+                ) : (
+                  '🔍'
+                )}
               </span>
               <input
                 id="map-text-search"
@@ -433,7 +487,7 @@ export default function MapPage({
                 <button
                   type="button"
                   onClick={() => setSearchText('')}
-                  className="shrink-0 text-xs text-white/30 transition-colors hover:text-white/60"
+                  className="shrink-0 text-xs text-white transition-colors hover:text-white/60"
                   aria-label="Clear search"
                 >
                   ✕
@@ -513,18 +567,11 @@ export default function MapPage({
                   <span
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMoodLabel(null);
-                      setMoodMarkers(null);
-                    }}
+                    onClick={(e) => onClearMood()}
                     onKeyDown={(e) =>
-                      e.key === 'Enter' &&
-                      (e.stopPropagation(),
-                      setMoodLabel(null),
-                      setMoodMarkers(null))
+                      e.key === 'Enter' && (e.stopPropagation(), onClearMood())
                     }
-                    className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-text-tertiary transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-white transition-colors hover:bg-white/10 hover:text-white"
                     aria-label="Clear mood results"
                   >
                     ✕
@@ -533,7 +580,7 @@ export default function MapPage({
                 <motion.span
                   animate={{ rotate: showMoodPanel ? 180 : 0 }}
                   transition={springPresets.snappy}
-                  className="text-[10px] text-text-tertiary"
+                  className="text-[10px] text-white"
                   aria-hidden="true"
                 >
                   ▼
@@ -566,32 +613,38 @@ export default function MapPage({
         </motion.div>
       )}
 
-      {/* User GPS dot */}
-      {flags.user_location_enabled && locationStatus === 'success' && (
-        <UserLocationDot map={null} position={userPosition} />
-      )}
-
       {/* Floating control panel */}
       <MapControls
-        heatmapActive={heatmapActive}
-        is3DActive={is3DActive}
         locationStatus={locationStatus}
         flags={{
           user_location_enabled: flags.user_location_enabled,
           heatmap_enabled: flags.heatmap_enabled,
           map_3d_enabled: flags.map_3d_enabled,
         }}
-        onToggleHeatmap={handleToggleHeatmap}
-        onToggle3D={handleToggle3D}
         onLocateMe={requestLocation}
+        savedListActive={showSavedList}
+        onToggleSavedList={toggleSavedList}
       />
 
-      {/* Selected location bottom card */}
+      {/* Saved list panel — shown when bookmark button is active */}
+      <AnimatePresence>
+        {showSavedList && (
+          <SavedListPanel
+            locations={savedMarkers}
+            loading={savedLoading}
+            onLocationClick={handleSavedItemClick}
+            onClose={() => setShowSavedList(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Selected location bottom card — shows on top of saved list when both are active */}
       <SelectedLocationCard
         marker={selectedMarker}
         onDismiss={handleDismissCard}
         onUpdate={handleMarkerUpdate}
         onViewDetails={handleViewDetails}
+        onSaveChange={() => { if (showSavedList) fetchSavedList(); }}
       />
 
       {/* Add location card — appears when user clicks empty map space */}

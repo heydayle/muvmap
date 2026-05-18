@@ -1,6 +1,7 @@
+import AuthSection from '@/shared/components/AuthSection/AuthSection';
+import { APP_NAME } from '@/shared/constants/app';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import AuthSection from '@/shared/components/AuthSection/AuthSection';
 
 /**
  * Viewport configuration — theme color for mobile browsers.
@@ -13,7 +14,7 @@ export const viewport: Viewport = {
  * Root metadata for SEO — title and description.
  */
 export const metadata: Metadata = {
-  title: 'MoodMap — Find Places That Match Your Mood',
+  title: `${APP_NAME} — Find Places That Match Your Mood`,
   description:
     'AI-powered location discovery based on your current mood. Drop a vibe, get a place.',
 };
@@ -36,10 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
@@ -49,9 +47,10 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/logo.svg" type="image/x-icon" />
       </head>
       <body>
-        {/* Global auth nav — guest Sign In pill / authenticated avatar */}
+        {/* Global header — nav links + auth in one pill (top-right) */}
         <AuthSection />
         {children}
       </body>

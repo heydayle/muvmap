@@ -78,6 +78,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+button {
+  @apply cursor-pointer;
+}
+
 /* ---- Typography Scale (fluid) ---- */
 h1,
 h2,

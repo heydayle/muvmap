@@ -9,3 +9,4 @@ export { default as GlassCard } from './atoms/GlassCard';
 export { default as Button } from './atoms/Button';
 export { default as TagPill } from './atoms/TagPill';
 export { default as Skeleton } from './atoms/Skeleton';
+export { AppNavbar } from './organisms';

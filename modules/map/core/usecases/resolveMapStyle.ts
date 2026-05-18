@@ -1,5 +1,5 @@
 import { MoodCategory } from '@/shared/types';
-import { OPENFREEMAP_STYLES, MoodMapStyle } from '../models/mapConfig';
+import { MoodMapStyle, OPENFREEMAP_STYLES } from '../models/mapConfig';
 
 /**
  * Mood → CSS color overlay value.
@@ -41,7 +41,7 @@ export function resolveMapStyle(
   mood: MoodCategory | null,
   moodThemeEnabled: boolean,
 ): ResolvedMapStyle {
-  const styleUrl = OPENFREEMAP_STYLES.liberty;
+  const styleUrl = OPENFREEMAP_STYLES.dark;
 
   const moodStyle: MoodMapStyle =
     moodThemeEnabled && mood !== null ? mood : 'default';

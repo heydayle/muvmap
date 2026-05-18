@@ -24,6 +24,8 @@ export interface MapCamera {
   pitch?: number;
   /** Camera bearing (rotation) in degrees */
   bearing?: number;
+  /** Map style — OpenFreeMap style URL */
+  style?: string;
 }
 
 /**
@@ -68,4 +70,5 @@ export const OPENFREEMAP_STYLES = {
   liberty: 'https://tiles.openfreemap.org/styles/liberty',
   bright: 'https://tiles.openfreemap.org/styles/bright',
   positron: 'https://tiles.openfreemap.org/styles/positron',
+  dark: 'https://tiles.openfreemap.org/styles/dark',
 } as const;

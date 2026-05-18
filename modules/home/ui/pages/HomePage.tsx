@@ -1,6 +1,11 @@
 'use client';
 
-import Link from 'next/link';
+import MoodInputPanel from '@/modules/mood-matching/ui/components/MoodInputPanel';
+import { APP_NAME } from '@/shared/constants/app';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useCallback } from 'react';
+import { MoodMatchInput } from '@/modules/mood-matching/core/models/moodMatch';
 
 /**
  * HomePage is the landing page component for the MoodMap app.
@@ -8,9 +13,35 @@ import Link from 'next/link';
  * Per CLAUDE.md §1: This component lives in `modules/` and is exported
  * to `app/page.tsx`. All UI logic belongs here, not in the Next.js entry.
  *
+ * The mood input panel lives here so users can jump straight to /map results
+ * from the landing page.
+ *
  * @returns The hero landing page component
  */
 export default function HomePage() {
+  const router = useRouter();
+
+  /**
+   * Handles mood submission — navigates to /map with the query params.
+   * Mirrors the same logic used in MoodMatchPage.
+   *
+   * @param input - User's mood input (text or emoji)
+   */
+  const handleSubmit = useCallback(
+    (input: MoodMatchInput) => {
+      const params = new URLSearchParams();
+      if (input.inputType === 'text' && input.text) {
+        params.set('q', input.text);
+        params.set('type', 'text');
+      } else if (input.inputType === 'emoji' && input.emoji?.length) {
+        params.set('emoji', input.emoji.join(','));
+        params.set('type', 'emoji');
+      }
+      router.push(`/map?${params.toString()}`);
+    },
+    [router],
+  );
+
   return (
     <main className="mx-auto max-w-[1200px] px-4 md:px-6 lg:px-8">
       <section className="relative flex min-h-[80vh] flex-col items-center justify-center gap-6 text-center">
@@ -27,13 +58,16 @@ export default function HomePage() {
         />
 
         {/* Hero content */}
-        <div className="relative z-[1] flex flex-col items-center gap-4">
-          <span className="inline-flex items-center gap-1.5 rounded-pill border border-mood-energetic/20 bg-mood-energetic/10 px-3.5 py-1.5 text-xs font-medium text-mood-energetic">
-            🚀 Phase 0 — Bootstrap Complete
-          </span>
-
+        <div className="relative z-[1] flex w-full max-w-[520px] flex-col items-center gap-6">
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            width={70}
+            height={70}
+            className="animate-bounce animate-once animate-duration-1000"
+          />
           <h1 className="bg-gradient-to-br from-white to-primary-light bg-clip-text text-transparent">
-            MoodMap
+            {APP_NAME}
           </h1>
 
           <p className="max-w-[520px] text-[clamp(16px,2vw,20px)] leading-relaxed text-text-secondary">
@@ -41,17 +75,10 @@ export default function HomePage() {
             vibe, get a place.
           </p>
 
-          {/**
-           * Links to /mood so the user can input their mood and get matched
-           * locations shown on the map.
-           */}
-          <Link
-            href="/mood"
-            className="rounded-lg bg-gradient-to-br from-primary to-primary-light px-8 py-4 text-base font-medium text-white transition-all duration-150 hover:-translate-y-px hover:shadow-glow active:scale-[0.97]"
-            id="home-match-my-mood"
-          >
-            Match My Mood
-          </Link>
+          {/* Mood input — submits directly to /map */}
+          <div className="w-full text-left">
+            <MoodInputPanel onSubmit={handleSubmit} />
+          </div>
         </div>
       </section>
     </main>

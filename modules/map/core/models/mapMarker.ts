@@ -37,6 +37,7 @@ export interface MapMarkerData {
    * Used by SelectedLocationCard to show the Edit button only to the creator.
    */
   user_id?: string;
+  is_public: boolean;
 }
 
 /**

@@ -7,6 +7,7 @@ import { ensureSession } from '@/shared/utils/ensureSession';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useRef, useState } from 'react';
 import { MapMarkerData } from '../../../core/models/mapMarker';
+import { X, MapPin } from 'lucide-react';
 
 const MOOD_OPTIONS: { value: MoodCategory; emoji: string; label: string }[] = [
   { value: 'calm', emoji: '😌', label: 'Calm' },
@@ -137,6 +138,7 @@ export default function AddLocationCard({
             latitude: lngLat[1],
             mood_category: mood,
             tags: finalTags,
+            is_public: true,
             ...(creatorNote.trim() && { creator_note: creatorNote.trim() }),
           }),
         });
@@ -228,7 +230,7 @@ export default function AddLocationCard({
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/20 text-white/60 transition-all hover:border-white/40 hover:bg-white/10 hover:text-white"
                 aria-label="Cancel"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -363,7 +365,7 @@ export default function AddLocationCard({
                               style={{ background: `${accentColor}40` }}
                               aria-label={`Remove ${tag}`}
                             >
-                              ✕
+                              <X className="h-2.5 w-2.5" />
                             </button>
                           </motion.span>
                         ))}
@@ -468,7 +470,9 @@ export default function AddLocationCard({
                         Sharing…
                       </span>
                     ) : (
-                      '📍 Share to Map'
+                      <span className="flex items-center justify-center gap-1.5">
+                        <MapPin className="h-4 w-4" /> Share to Map
+                      </span>
                     )}
                   </motion.button>
                 </motion.form>

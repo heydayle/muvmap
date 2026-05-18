@@ -9,15 +9,15 @@ const parseTags = (raw: string | null | undefined): string[] =>
 
 // ── Mock fallback (used when Supabase is not configured) ─────────────────────
 const MOCK_MARKERS: MapMarkerData[] = [
-  { id: '1a2b3c4d-0001-4000-a000-000000000001', lngLat: [100.5018, 13.7563], name: 'Sunset Café',            mood_category: 'calm',      tags: ['cozy','coffee','sunset'],           state: 'default' },
-  { id: '1a2b3c4d-0002-4000-a000-000000000002', lngLat: [100.5349, 13.7469], name: 'Midnight Park',           mood_category: 'chill',     tags: ['night','scenic','quiet'],           state: 'default' },
-  { id: '1a2b3c4d-0003-4000-a000-000000000003', lngLat: [100.5347, 13.7462], name: 'Electric Arcade',         mood_category: 'excited',   tags: ['gaming','neon','late-night'],       state: 'default' },
-  { id: '1a2b3c4d-0004-4000-a000-000000000004', lngLat: [100.5231, 13.7319], name: 'Lakeside Trail',          mood_category: 'energetic', tags: ['nature','morning','exercise'],      state: 'default' },
-  { id: 'pub-0001-4000-a000-000000000001',      lngLat: [100.5330, 13.7459], name: 'The Golden Hour Rooftop', mood_category: 'romantic',  tags: ['rooftop','sunset','drinks'],        state: 'default' },
-  { id: 'pub-0002-4000-a000-000000000002',      lngLat: [100.5286, 13.7395], name: 'Neon Alley Night Market', mood_category: 'excited',   tags: ['street-food','neon','night-market'],state: 'default' },
-  { id: 'pub-0003-4000-a000-000000000003',      lngLat: [100.5413, 13.7512], name: 'Zen Garden Café',         mood_category: 'calm',      tags: ['matcha','zen','quiet'],             state: 'default' },
-  { id: 'pub-0005-4000-a000-000000000005',      lngLat: [100.5589, 13.7622], name: 'Cloud Nine Lounge',       mood_category: 'chill',     tags: ['lounge','lo-fi','cozy'],            state: 'default' },
-  { id: 'pub-0006-4000-a000-000000000006',      lngLat: [100.5210, 13.7448], name: 'Retro Vinyl Club',        mood_category: 'happy',     tags: ['music','vinyl','retro'],            state: 'default' },
+  { id: '1a2b3c4d-0001-4000-a000-000000000001', lngLat: [100.5018, 13.7563], name: 'Sunset Café',            mood_category: 'calm',      tags: ['cozy','coffee','sunset'],           state: 'default', is_public: true },
+  { id: '1a2b3c4d-0002-4000-a000-000000000002', lngLat: [100.5349, 13.7469], name: 'Midnight Park',           mood_category: 'chill',     tags: ['night','scenic','quiet'],           state: 'default', is_public: true },
+  { id: '1a2b3c4d-0003-4000-a000-000000000003', lngLat: [100.5347, 13.7462], name: 'Electric Arcade',         mood_category: 'excited',   tags: ['gaming','neon','late-night'],       state: 'default', is_public: true },
+  { id: '1a2b3c4d-0004-4000-a000-000000000004', lngLat: [100.5231, 13.7319], name: 'Lakeside Trail',          mood_category: 'energetic', tags: ['nature','morning','exercise'],      state: 'default', is_public: true },
+  { id: 'pub-0001-4000-a000-000000000001',      lngLat: [100.5330, 13.7459], name: 'The Golden Hour Rooftop', mood_category: 'romantic',  tags: ['rooftop','sunset','drinks'],        state: 'default', is_public: true },
+  { id: 'pub-0002-4000-a000-000000000002',      lngLat: [100.5286, 13.7395], name: 'Neon Alley Night Market', mood_category: 'excited',   tags: ['street-food','neon','night-market'],state: 'default', is_public: true },
+  { id: 'pub-0003-4000-a000-000000000003',      lngLat: [100.5413, 13.7512], name: 'Zen Garden Café',         mood_category: 'calm',      tags: ['matcha','zen','quiet'],             state: 'default', is_public: true },
+  { id: 'pub-0005-4000-a000-000000000005',      lngLat: [100.5589, 13.7622], name: 'Cloud Nine Lounge',       mood_category: 'chill',     tags: ['lounge','lo-fi','cozy'],            state: 'default', is_public: true },
+  { id: 'pub-0006-4000-a000-000000000006',      lngLat: [100.5210, 13.7448], name: 'Retro Vinyl Club',        mood_category: 'happy',     tags: ['music','vinyl','retro'],            state: 'default', is_public: true },
 ];
 
 function inBounds(lng: number, lat: number, bounds: number[]): boolean {
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
       let query = supabase
         .from('locations')
-        .select('id, name, latitude, longitude, mood_category, tags, creator_note, user_id');
+        .select('id, name, latitude, longitude, mood_category, tags, creator_note, user_id, is_public');
 
       // ── Text search: match across name, creator_note, mood_category, tags ──
       // When a search query is present we search globally (skip bounds filter)
@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
         mood_category: row.mood_category ?? null,
         tags: parseTags(row.tags),
         state: 'default' as const,
+        is_public: row.is_public ?? true,
         ...(row.creator_note ? { creator_note: row.creator_note } : {}),
         ...(row.user_id ? { user_id: row.user_id } : {}),
       }));

@@ -7,6 +7,4 @@
  * Organisms are added here as the project scales.
  */
 
-// Organisms will be added here as they are created.
-// export { default as AppHeader } from './AppHeader';
-export {};
+export { default as AppNavbar } from './AppNavbar';

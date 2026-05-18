@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useTrending } from './useTrending';
 import * as discoveryApiModule from '../../infras/discoveryApi';
@@ -76,7 +76,7 @@ describe('useTrending', () => {
     const { result } = renderHook(() => useTrending('week'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    result.current.refetch();
+    await act(async () => { result.current.refetch(); });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(discoveryApiModule.discoveryRepository.getTrending).toHaveBeenCalledTimes(2);
   });

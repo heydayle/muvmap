@@ -32,7 +32,7 @@ export default function SpotsPage() {
     const supabase = createClient();
     supabase
       .from('locations')
-      .select('id, name, latitude, longitude, mood_category, tags, creator_note, created_at')
+      .select('id, name, latitude, longitude, mood_category, tags, creator_note, is_public, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
@@ -43,6 +43,7 @@ export default function SpotsPage() {
           mood_category: row.mood_category ?? null,
           tags: parseTags(row.tags),
           state: 'default' as const,
+          is_public: row.is_public ?? true,
           ...(row.creator_note ? { creator_note: row.creator_note } : {}),
         }));
         setSpots(markers);

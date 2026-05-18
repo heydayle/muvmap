@@ -2,15 +2,40 @@ import type { Metadata } from 'next';
 import MapPage from '@/modules/map/ui/pages';
 import { MapMarkerData } from '@/modules/map/core/models/mapMarker';
 import { MoodCategory } from '@/shared/types';
+import { APP_NAME } from '@/shared/constants/app';
 
-/**
- * SEO metadata for the Map page.
- */
-export const metadata: Metadata = {
-  title: 'Map — MoodMap',
-  description:
-    'Explore your saved locations on an interactive map. Filter by mood and find spots nearby.',
-};
+export async function generateMetadata({ searchParams }: MapRouteProps): Promise<Metadata> {
+  const params = await searchParams;
+
+  if (params.id && params.name) {
+    const tagsStr = params.tags ? ` (${params.tags.split(',').map(t => `#${t}`).join(' ')})` : '';
+    const moodStr = params.mood ? ` - A ${params.mood} vibe` : '';
+    const title = `${params.name} — ${APP_NAME}`;
+    const description = `Check out ${params.name} on ${APP_NAME}!${moodStr}${tagsStr}. Discover locations matching your vibe.`;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        siteName: APP_NAME,
+      },
+      twitter: {
+        card: 'summary',
+        title,
+        description,
+      },
+    };
+  }
+
+  return {
+    title: `Map — ${APP_NAME}`,
+    description:
+      'Explore your saved locations on an interactive map. Filter by mood and find spots nearby.',
+  };
+}
 
 /**
  * Props for the map route — Next.js passes searchParams automatically.
@@ -18,7 +43,7 @@ export const metadata: Metadata = {
  * Deep-link params (set by Discovery page on card click):
  *   ?id=...&lat=...&lng=...&name=...&mood=...&tags=...
  *
- * Mood-search params (set by Mood page on submit):
+ * Mood-search params (set by the home page MoodInputPanel on submit):
  *   ?q=I+want+something+cozy&type=text
  *   ?emoji=😌,🧘&type=emoji
  */
@@ -61,11 +86,12 @@ export default async function MapRoute({ searchParams }: MapRouteProps) {
       mood_category: (params.mood as MoodCategory) || null,
       tags: params.tags ? params.tags.split(',').filter(Boolean) : [],
       state: 'selected',
+      is_public: true,
     };
   }
 
   /**
-   * Parse mood-search query forwarded from the /mood page.
+   * Parse mood-search query forwarded from the home page.
    * When present, MapPage will call the mood-match API and show results as markers.
    */
   const moodQuery: { text?: string; emoji?: string[]; inputType: 'text' | 'emoji' } | null =

@@ -47,7 +47,7 @@ const MoodMapPanel = dynamic(() => import('../components/MoodMapPanel'), {
 /** Props injected by the Server Component page shell */
 export interface MoodMatchPageProps {
   /**
-   * Initial URL search params passed down from `app/mood/page.tsx`.
+   * Initial URL search params passed down from `app/map/page.tsx` or direct links.
    * Used to restore state on page reload: `?q=cozy+vibes&type=text`
    * or `?emoji=😌,🧘&type=emoji`.
    */
@@ -152,10 +152,10 @@ export default function MoodMatchPage({ initialSearchParams = {} }: MoodMatchPag
     [router],
   );
 
-  /** Resets everything back to idle and clears URL params */
+  /** Resets everything back to idle and navigates home */
   const handleReset = useCallback(() => {
     setSelectedLocationId(null);
-    router.replace('/mood', { scroll: false });
+    router.replace('/', { scroll: false });
     reset();
   }, [reset, router]);
 
@@ -372,12 +372,18 @@ export default function MoodMatchPage({ initialSearchParams = {} }: MoodMatchPag
         {/* Hero */}
         <MoodMatchHero detectedMood={result?.detectedMood ?? null} />
 
-        {/* Input panel */}
-        <section className="px-4 pb-6 md:px-8" aria-label="Mood input">
-          <MoodInputPanel
-            onSubmit={handleSubmit}
-            isLoading={phase === 'thinking'}
-          />
+        {/* Input has moved to the homepage — guide user back */}
+        <section className="flex flex-col items-center gap-4 px-4 pb-6 md:px-8" aria-label="Mood input">
+          <p className="text-sm text-text-secondary">
+            Enter your mood on the home page to get matched locations.
+          </p>
+          <a
+            href="/"
+            id="mood-go-home"
+            className="rounded-[14px] bg-gradient-to-br from-primary to-primary-light px-8 py-3.5 text-sm font-semibold text-white transition-all duration-150 hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(0,123,255,0.5)] active:scale-[0.97]"
+          >
+            ✨ Match My Mood
+          </a>
         </section>
 
         {/* Dynamic content area */}
