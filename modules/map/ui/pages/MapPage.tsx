@@ -10,15 +10,21 @@ import { AnimatePresence, motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_MAP_FLAGS, MapFeatureFlags } from '../../core/models/mapFlags';
 import { OPENFREEMAP_STYLES } from '../../core/models/mapConfig';
+import { DEFAULT_MAP_FLAGS, MapFeatureFlags } from '../../core/models/mapFlags';
 import { MapMarkerData } from '../../core/models/mapMarker';
 import AddLocationCard from '../components/AddLocationCard/AddLocationCard';
+import LocationListStrip from '../components/LocationListStrip';
 import MapControls from '../components/MapControls';
 import MapFallback from '../components/MapFallback';
 import SelectedLocationCard from '../components/SelectedLocationCard';
+import TrendingFilters, {
+  type FeedFilter,
+} from '../components/TrendingFilters';
 import { useUserLocation } from '../hooks/useUserLocation';
-const SavedListPanel = dynamic(() => import('../components/SavedListPanel'), { ssr: false });
+const SavedListPanel = dynamic(() => import('../components/SavedListPanel'), {
+  ssr: false,
+});
 
 /**
  * MapView loaded dynamically to avoid SSR issues with MapLibre GL.
@@ -32,7 +38,6 @@ const MapView = dynamic(() => import('../components/MapView'), {
     </div>
   ),
 });
-
 
 /** MoodInputPanel loaded dynamically — avoids pulling framer-motion into the initial map bundle */
 const MoodInputPanel = dynamic(
@@ -196,8 +201,52 @@ export default function MapPage({
     });
   }, []);
 
-  // Search results > saved list > mood results > bounds markers
-  const overrideMarkers = searchMarkers ?? (showSavedList ? savedMarkers : null) ?? moodMarkers ?? undefined;
+  // ── Feed filter (Trending / Today / This Week) ─────────────────────────
+  const [feedFilter, setFeedFilter] = useState<FeedFilter | null>(null);
+  const [feedMarkers, setFeedMarkers] = useState<MapMarkerData[] | null>(null);
+  const [feedLoading, setFeedLoading] = useState(false);
+
+  const fetchFeedMarkers = useCallback(async (filter: FeedFilter) => {
+    setFeedLoading(true);
+    try {
+      const res = await fetch(`/api/map/markers?filter=${filter}`);
+      const data: MapMarkerData[] = await res.json();
+      setFeedMarkers(data);
+    } catch {
+      setFeedMarkers([]);
+    } finally {
+      setFeedLoading(false);
+    }
+  }, []);
+
+  const handleFeedFilterChange = useCallback(
+    (filter: FeedFilter | null) => {
+      setFeedFilter(filter);
+      if (filter) {
+        fetchFeedMarkers(filter);
+        // Clear conflicting overlays
+        setSelectedMarker(null);
+        setPendingPin(null);
+      } else {
+        setFeedMarkers(null);
+      }
+    },
+    [fetchFeedMarkers],
+  );
+
+  const FEED_FILTER_TITLE: Record<FeedFilter, string> = {
+    trending: '🔥 Trending',
+    today: '📅 Today',
+    this_week: '📆 This Week',
+  };
+
+  // Search results > saved list > feed filter > mood results > bounds markers
+  const overrideMarkers =
+    searchMarkers ??
+    (showSavedList ? savedMarkers : null) ??
+    (feedFilter ? (feedMarkers ?? []) : null) ??
+    moodMarkers ??
+    undefined;
 
   /** Whether the floating mood search panel is open */
   const [showMoodPanel, setShowMoodPanel] = useState(false);
@@ -261,6 +310,25 @@ export default function MapPage({
   const flyToRef = useRef<
     ((camera: { center: [number, number]; zoom: number }) => void) | null
   >(null);
+
+  /**
+   * Ref to the search widget container.
+   * Used to dynamically measure its height so the filter pills
+   * can be positioned directly beneath it, even when mood panel is expanded.
+   */
+  const searchWidgetRef = useRef<HTMLDivElement>(null);
+  const [pillsTop, setPillsTop] = useState(68 + 112 + 8); // sensible initial guess
+
+  useEffect(() => {
+    const el = searchWidgetRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver(() => {
+      const rect = el.getBoundingClientRect();
+      setPillsTop(rect.bottom + 8);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   const {
     position: userPosition,
@@ -460,6 +528,7 @@ export default function MapPage({
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={springPresets.smooth}
+          ref={searchWidgetRef}
           className="absolute left-4 right-4 top-[68px] z-30 sm:left-1/2 sm:right-auto 2xl:top-4 sm:w-[min(420px,calc(100vw-2rem))] sm:-translate-x-1/2"
           aria-label="Location search and mood widget"
         >
@@ -613,6 +682,24 @@ export default function MapPage({
         </motion.div>
       )}
 
+      {/* ── Feed filter pills ──────────────────────────────────────────────── */}
+      {!moodLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...springPresets.smooth, delay: 0.08 }}
+          className="absolute left-1/2 -translate-x-1/2 z-30"
+          style={{ top: pillsTop }}
+          aria-label="Feed filter buttons"
+        >
+          <TrendingFilters
+            activeFilter={feedFilter}
+            loading={feedLoading}
+            onFilterChange={handleFeedFilterChange}
+          />
+        </motion.div>
+      )}
+
       {/* Floating control panel */}
       <MapControls
         locationStatus={locationStatus}
@@ -638,13 +725,37 @@ export default function MapPage({
         )}
       </AnimatePresence>
 
+      {/* Feed filter location strip — shown when a feed filter is active */}
+      <AnimatePresence>
+        {feedFilter && !selectedMarker && (
+          <LocationListStrip
+            locations={feedMarkers ?? []}
+            selectedId={
+              selectedMarker ? (selectedMarker as MapMarkerData).id : null
+            }
+            title={FEED_FILTER_TITLE[feedFilter]}
+            loading={feedLoading}
+            onLocationClick={(loc) => {
+              setSelectedMarker(loc);
+              flyToRef.current?.({ center: loc.lngLat, zoom: 15 });
+            }}
+            onClose={() => handleFeedFilterChange(null)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Selected location bottom card — shows on top of saved list when both are active */}
       <SelectedLocationCard
         marker={selectedMarker}
-        onDismiss={handleDismissCard}
+        onDismiss={() => {
+          handleDismissCard();
+          // Re-show the strip if a feed filter is still active
+        }}
         onUpdate={handleMarkerUpdate}
         onViewDetails={handleViewDetails}
-        onSaveChange={() => { if (showSavedList) fetchSavedList(); }}
+        onSaveChange={() => {
+          if (showSavedList) fetchSavedList();
+        }}
       />
 
       {/* Add location card — appears when user clicks empty map space */}
