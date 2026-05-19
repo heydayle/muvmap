@@ -7,7 +7,7 @@ export type FeedFilter = 'trending' | 'today' | 'this_week';
 
 const FILTERS: { id: FeedFilter; label: string; emoji: string }[] = [
   { id: 'trending', label: 'Trending', emoji: '🔥' },
-  { id: 'today',    label: 'Today',    emoji: '📅' },
+  { id: 'today', label: 'Today', emoji: '📅' },
   { id: 'this_week', label: 'This Week', emoji: '📆' },
 ];
 
@@ -47,7 +47,7 @@ export default function TrendingFilters({
             aria-pressed={isActive}
             disabled={loading}
             className={cn(
-              'relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold',
+              'relative flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[12px] font-semibold w-32 justify-center',
               'border transition-all duration-200 select-none',
               'disabled:cursor-not-allowed disabled:opacity-60',
               isActive

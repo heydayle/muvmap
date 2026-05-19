@@ -17,6 +17,21 @@ const MOOD_COLORS: Record<string, string> = {
 const DEFAULT_COLOR = '#64748B';
 const SELECTED_COLOR = '#007BFF';
 
+/** Inject float keyframe once — idempotent via the style element id */
+function ensureFloatKeyframes(): void {
+  if (document.getElementById('muvmap-marker-float')) return;
+  const style = document.createElement('style');
+  style.id = 'muvmap-marker-float';
+  style.textContent = `
+    @keyframes markerFloat {
+      0%   { transform: translateY(0px); }
+      50%  { transform: translateY(-6px); }
+      100% { transform: translateY(0px); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 /**
  * Creates a custom SVG marker DOM element.
  *
@@ -48,21 +63,28 @@ function createMarkerElement(
    *           `inner` is a child div that receives all visual styles and hover effects.
    */
   const el = document.createElement('div');
-  el.style.width = '32px';
-  el.style.height = '42px';
+  el.style.width = '24px';
+  el.style.height = '32px';
   el.style.cursor = 'pointer';
   // No transform, filter, or transition on el — MapLibre owns those
 
   // Inner div: safe to animate freely without touching MapLibre's positioning
   const inner = document.createElement('div');
-  inner.style.width = '32px';
-  inner.style.height = '42px';
+  inner.style.width = '24px';
+  inner.style.height = '32px';
   inner.style.filter = `drop-shadow(0 2px 6px ${color}88)`;
-  inner.style.transition = 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease';
   inner.style.transformOrigin = '50% 100%'; // scale from pin tip anchor point
 
+  if (state === 'selected') {
+    ensureFloatKeyframes();
+    inner.style.animation = 'markerFloat 2s ease-in-out infinite';
+  } else {
+    // Non-selected markers keep the spring hover transition
+    inner.style.transition = 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease';
+  }
+
   inner.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42" width="32" height="42">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42" width="24" height="32">
       <defs>
         <radialGradient id="${gradientId}" cx="50%" cy="35%" r="60%">
           <stop offset="0%" stop-color="${color}" stop-opacity="1"/>
@@ -82,13 +104,17 @@ function createMarkerElement(
     </svg>
   `;
 
-  // Hover on inner — never touches el.style.transform
+  // Hover on inner — pause float, apply scale, then resume on leave
   inner.addEventListener('mouseenter', () => {
+    inner.style.animationPlayState = 'paused';
     inner.style.transform = 'scale(1.2)';
+    inner.style.transition = 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease';
     inner.style.filter = `drop-shadow(0 4px 12px ${color}aa)`;
   });
   inner.addEventListener('mouseleave', () => {
     inner.style.transform = '';
+    inner.style.transition = '';
+    inner.style.animationPlayState = 'running';
     inner.style.filter = `drop-shadow(0 2px 6px ${color}88)`;
   });
 

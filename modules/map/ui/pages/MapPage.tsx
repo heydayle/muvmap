@@ -22,6 +22,13 @@ import TrendingFilters, {
   type FeedFilter,
 } from '../components/TrendingFilters';
 import { useUserLocation } from '../hooks/useUserLocation';
+
+const FEED_FILTER_TITLE: Record<FeedFilter, string> = {
+  trending: '🔥 Trending',
+  today: '📅 Today',
+  this_week: '📆 This Week',
+};
+
 const SavedListPanel = dynamic(() => import('../components/SavedListPanel'), {
   ssr: false,
 });
@@ -159,6 +166,9 @@ export default function MapPage({
   const [savedMarkers, setSavedMarkers] = useState<MapMarkerData[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
 
+  /** [lng, lat] of a pending drop-pin (user clicked empty map space) */
+  const [pendingPin, setPendingPin] = useState<[number, number] | null>(null);
+
   /**
    * Fetches the user's saved location list from the API.
    * Called the first time the saved panel is opened and on subsequent opens.
@@ -234,12 +244,6 @@ export default function MapPage({
     [fetchFeedMarkers],
   );
 
-  const FEED_FILTER_TITLE: Record<FeedFilter, string> = {
-    trending: '🔥 Trending',
-    today: '📅 Today',
-    this_week: '📆 This Week',
-  };
-
   // Search results > saved list > feed filter > mood results > bounds markers
   const overrideMarkers =
     searchMarkers ??
@@ -310,25 +314,6 @@ export default function MapPage({
   const flyToRef = useRef<
     ((camera: { center: [number, number]; zoom: number }) => void) | null
   >(null);
-
-  /**
-   * Ref to the search widget container.
-   * Used to dynamically measure its height so the filter pills
-   * can be positioned directly beneath it, even when mood panel is expanded.
-   */
-  const searchWidgetRef = useRef<HTMLDivElement>(null);
-  const [pillsTop, setPillsTop] = useState(68 + 112 + 8); // sensible initial guess
-
-  useEffect(() => {
-    const el = searchWidgetRef.current;
-    if (!el) return;
-    const obs = new ResizeObserver(() => {
-      const rect = el.getBoundingClientRect();
-      setPillsTop(rect.bottom + 8);
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   const {
     position: userPosition,
@@ -414,9 +399,6 @@ export default function MapPage({
   const handleDismissCard = useCallback(() => {
     setSelectedMarker(null);
   }, []);
-
-  /** [lng, lat] of a pending drop-pin (user clicked empty map space) */
-  const [pendingPin, setPendingPin] = useState<[number, number] | null>(null);
 
   /**
    * Called when the user clicks empty map space.
@@ -528,7 +510,6 @@ export default function MapPage({
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={springPresets.smooth}
-          ref={searchWidgetRef}
           className="absolute left-4 right-4 top-[68px] z-30 sm:left-1/2 sm:right-auto 2xl:top-4 sm:w-[min(420px,calc(100vw-2rem))] sm:-translate-x-1/2"
           aria-label="Location search and mood widget"
         >
@@ -636,7 +617,7 @@ export default function MapPage({
                   <span
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => onClearMood()}
+                    onClick={(e) => { e.stopPropagation(); onClearMood(); }}
                     onKeyDown={(e) =>
                       e.key === 'Enter' && (e.stopPropagation(), onClearMood())
                     }
@@ -656,6 +637,15 @@ export default function MapPage({
                 </motion.span>
               </div>
             </button>
+
+            {/* ── Feed filter pills — inside the widget ── */}
+            <div className="border-t border-white/8 px-3 py-2" aria-label="Feed filter buttons">
+              <TrendingFilters
+                activeFilter={feedFilter}
+                loading={feedLoading}
+                onFilterChange={handleFeedFilterChange}
+              />
+            </div>
 
             {/* ── Expanded body: full input form ── */}
             <AnimatePresence>
@@ -679,24 +669,6 @@ export default function MapPage({
               )}
             </AnimatePresence>
           </div>
-        </motion.div>
-      )}
-
-      {/* ── Feed filter pills ──────────────────────────────────────────────── */}
-      {!moodLoading && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...springPresets.smooth, delay: 0.08 }}
-          className="absolute left-1/2 -translate-x-1/2 z-30"
-          style={{ top: pillsTop }}
-          aria-label="Feed filter buttons"
-        >
-          <TrendingFilters
-            activeFilter={feedFilter}
-            loading={feedLoading}
-            onFilterChange={handleFeedFilterChange}
-          />
         </motion.div>
       )}
 
@@ -730,9 +702,7 @@ export default function MapPage({
         {feedFilter && !selectedMarker && (
           <LocationListStrip
             locations={feedMarkers ?? []}
-            selectedId={
-              selectedMarker ? (selectedMarker as MapMarkerData).id : null
-            }
+            selectedId={null}
             title={FEED_FILTER_TITLE[feedFilter]}
             loading={feedLoading}
             onLocationClick={(loc) => {
