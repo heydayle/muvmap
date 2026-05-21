@@ -2,11 +2,11 @@ import { type NextRequest } from 'next/server';
 import { createClient } from '@/shared/utils/supabase/middleware';
 
 /**
- * Next.js middleware — runs on every matched request.
+ * Next.js proxy — runs on every matched request.
  * Uses Supabase's SSR helper to keep user sessions alive by refreshing
  * the auth token cookie before it expires.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return createClient(request);
 }
 

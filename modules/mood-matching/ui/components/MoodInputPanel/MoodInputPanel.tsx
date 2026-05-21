@@ -16,11 +16,15 @@ export interface MoodInputPanelProps {
   isLoading?: boolean;
 }
 
+const MODE_CONFIG: { id: MoodInputType; icon: string; label: string }[] = [
+  { id: 'text', icon: '✏️', label: 'Describe' },
+  { id: 'emoji', icon: '😊', label: 'Emoji' },
+];
+
 /**
  * MoodInputPanel — the primary mood input surface.
- * Toggles between text and emoji input modes (flag.md Stories 5–6).
+ * Toggles between text and emoji input modes.
  * Contains the submit button with spring-physics animation.
- * This is the #1 priority component per rules/design.md §13.
  *
  * @param props - MoodInputPanelProps
  * @returns Glassmorphic input panel with mode switcher
@@ -65,54 +69,57 @@ export default function MoodInputPanel({
       : selectedEmoji.length > 0);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={springPresets.smooth}
-      className="w-full rounded-[24px] border border-border-glass bg-surface-glass p-2 backdrop-blur-[16px]"
-      style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}
-    >
-      {/* Mode toggle */}
-      <div className="mb-6 flex w-full rounded-[14px] border border-border-default bg-surface p-1">
-        {(['text', 'emoji'] as MoodInputType[]).map((mode) => (
-          <motion.button
-            key={mode}
-            type="button"
-            onClick={() => setInputMode(mode)}
-            whileTap={{ scale: 0.97 }}
-            transition={springPresets.snappy}
-            className={[
-              'relative flex-1 rounded-[10px] py-2 text-sm font-medium capitalize transition-colors',
-              inputMode === mode
-                ? 'text-white'
-                : 'text-text-tertiary hover:text-text-secondary',
-            ].join(' ')}
-            aria-pressed={inputMode === mode}
-            aria-label={`Switch to ${mode} mood input`}
-          >
-            {inputMode === mode && (
-              <motion.div
-                layoutId="mode-indicator"
-                className="absolute inset-0 rounded-[10px] bg-primary"
-                transition={springPresets.smooth}
-                aria-hidden="true"
-              />
-            )}
-            <span className="relative z-10">
-              {mode === 'text' ? '✏️ Text' : '😊 Emoji'}
-            </span>
-          </motion.button>
-        ))}
+    <div className="w-full space-y-4">
+      {/* ── Mode toggle ── */}
+      <div className="flex w-full gap-2 rounded-2xl bg-white/5 p-1 ring-1 ring-white/8">
+        {MODE_CONFIG.map(({ id, icon, label }) => {
+          const isActive = inputMode === id;
+          return (
+            <motion.button
+              key={id}
+              type="button"
+              onClick={() => setInputMode(id)}
+              whileTap={{ scale: 0.96 }}
+              transition={springPresets.snappy}
+              className="relative flex-1 rounded-xl py-2.5 text-sm font-semibold"
+              aria-pressed={isActive}
+              aria-label={`Switch to ${label} mood input`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="mood-mode-indicator"
+                  className="absolute inset-0 rounded-xl"
+                  style={{
+                    background:
+                      'linear-gradient(135deg, rgba(139,92,246,0.9) 0%, rgba(59,130,246,0.9) 50%, rgba(6,182,212,0.9) 100%)',
+                    boxShadow: '0 0 20px rgba(99,102,241,0.4)',
+                  }}
+                  transition={springPresets.smooth}
+                  aria-hidden="true"
+                />
+              )}
+              <span
+                className={[
+                  'relative z-10 flex items-center justify-center gap-1.5 transition-colors duration-200',
+                  isActive ? 'text-white' : 'text-white/40 hover:text-white/60',
+                ].join(' ')}
+              >
+                <span className="text-base leading-none">{icon}</span>
+                {label}
+              </span>
+            </motion.button>
+          );
+        })}
       </div>
 
-      {/* Input area */}
+      {/* ── Input area ── */}
       <AnimatePresence mode="wait">
         {inputMode === 'text' ? (
           <motion.div
             key="text"
-            initial={{ opacity: 0, x: -10 }}
+            initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
+            exit={{ opacity: 0, x: 8 }}
             transition={springPresets.smooth}
           >
             <MoodTextInput
@@ -124,11 +131,11 @@ export default function MoodInputPanel({
         ) : (
           <motion.div
             key="emoji"
-            initial={{ opacity: 0, x: 10 }}
+            initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
+            exit={{ opacity: 0, x: -8 }}
             transition={springPresets.smooth}
-            className="max-h-[35vh] overflow-y-auto overflow-x-hidden pr-2"
+            className="max-h-[35vh] overflow-y-auto overflow-x-hidden pr-1"
           >
             <EmojiMoodPicker
               selected={selectedEmoji}
@@ -139,27 +146,48 @@ export default function MoodInputPanel({
         )}
       </AnimatePresence>
 
-      {/* Submit button */}
+      {/* ── Submit button ── */}
       <motion.button
         type="button"
         id="mood-match-submit"
         onClick={handleSubmit}
         disabled={!canSubmit}
-        whileHover={canSubmit ? { y: -1 } : {}}
+        whileHover={canSubmit ? { y: -2, scale: 1.01 } : {}}
         whileTap={canSubmit ? { scale: 0.97 } : {}}
         transition={springPresets.snappy}
         className={[
-          'mt-5 w-full rounded-[14px] py-3.5 text-sm font-semibold tracking-wide text-white',
-          'transition-all duration-150',
-          'disabled:cursor-not-allowed disabled:opacity-40',
-          canSubmit
-            ? 'bg-gradient-to-r from-primary to-primary-light shadow-[0_4px_20px_rgba(0,123,255,0.4)] hover:shadow-[0_6px_24px_rgba(0,123,255,0.5)]'
-            : 'bg-surface-elevated',
+          'relative w-full overflow-hidden rounded-2xl py-3.5 text-sm font-bold tracking-wide text-white',
+          'transition-all duration-200',
+          'disabled:cursor-not-allowed disabled:opacity-35',
         ].join(' ')}
+        style={
+          canSubmit
+            ? {
+                background:
+                  'linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%)',
+                boxShadow:
+                  '0 4px 24px rgba(99,102,241,0.45), 0 1px 0 rgba(255,255,255,0.12) inset',
+              }
+            : {
+                background: 'rgba(255,255,255,0.06)',
+              }
+        }
         aria-label="Match my mood to nearby locations"
       >
+        {/* Shimmer sweep on hover */}
+        {canSubmit && (
+          <motion.div
+            className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+            initial={{ x: '-100%' }}
+            animate={{ x: '200%' }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 1.5 }}
+            aria-hidden="true"
+          />
+        )}
+
         {isLoading ? (
-          <span className="flex items-center justify-center gap-2">
+          <span className="relative flex items-center justify-center gap-2">
+            <span className="text-base">🎯</span>
             Reading your vibe
             <span className="flex gap-0.5" aria-hidden="true">
               {[0, 1, 2].map((i) => (
@@ -177,9 +205,12 @@ export default function MoodInputPanel({
             </span>
           </span>
         ) : (
-          '✨ Match My Mood'
+          <span className="relative flex items-center justify-center gap-2">
+            <span className="text-base">✨</span>
+            Match My Mood
+          </span>
         )}
       </motion.button>
-    </motion.div>
+    </div>
   );
 }

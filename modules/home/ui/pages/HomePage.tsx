@@ -76,7 +76,14 @@ export default function HomePage() {
           </p>
 
           {/* Mood input — submits directly to /map */}
-          <div className="w-full text-left">
+          <div
+            className="w-full overflow-hidden rounded-[24px] border border-white/10 p-5"
+            style={{
+              background: 'rgba(15, 23, 42, 0.7)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset',
+            }}
+          >
             <MoodInputPanel onSubmit={handleSubmit} />
           </div>
         </div>

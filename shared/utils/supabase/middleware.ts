@@ -5,13 +5,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
 /**
- * Supabase client for use inside Next.js middleware.
+ * Supabase client for use inside Next.js proxy.
  * Keeps the user's session token refreshed by reading/writing cookies
  * on both the request and response.
  *
- * Usage in middleware.ts:
+ * Usage in proxy.ts:
  *   import { createClient } from '@/shared/utils/supabase/middleware'
- *   export async function middleware(request: NextRequest) {
+ *   export async function proxy(request: NextRequest) {
  *     return createClient(request)
  *   }
  */

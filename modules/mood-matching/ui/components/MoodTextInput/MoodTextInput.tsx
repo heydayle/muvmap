@@ -7,11 +7,11 @@ import { springPresets } from '@/shared/hooks/useAnimationPresets';
 /** Typewriter placeholder examples cycling through mood scenarios */
 const PLACEHOLDER_EXAMPLES = [
   'I want something cozy and quiet…',
-  'Feeling adventurous, let\'s explore!',
+  "Feeling adventurous, let's explore!",
   'Need a romantic spot for tonight…',
   'Want to chill and vibe with good music…',
   'Looking for something to lift my spirits…',
-  'I\'m feeling energetic, let\'s move!',
+  "I'm feeling energetic, let's move!",
 ];
 
 /** Max characters allowed in the mood text input */
@@ -29,7 +29,6 @@ export interface MoodTextInputProps {
 
 /**
  * Premium mood text input with typewriter placeholder animation.
- * The #1 most important UI component per rules/design.md §13.
  * Renders an animated gradient border on focus + character counter.
  *
  * @param props - MoodTextInputProps
@@ -82,16 +81,6 @@ export default function MoodTextInput({ value, onChange, disabled = false }: Moo
 
   return (
     <div className="relative w-full">
-      {/* Animated glow ring on focus */}
-      <motion.div
-        animate={{
-          opacity: isFocused ? 1 : 0,
-          scale: isFocused ? 1 : 0.98,
-        }}
-        transition={springPresets.gentle}
-        className="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-r from-primary via-primary-light to-primary-glow opacity-0 blur-sm"
-        aria-hidden="true"
-      />
 
       {/* Input wrapper */}
       <motion.div
@@ -107,20 +96,25 @@ export default function MoodTextInput({ value, onChange, disabled = false }: Moo
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
           placeholder={value ? '' : displayedPlaceholder}
-          rows={3}
+          rows={4}
           maxLength={MAX_LENGTH}
           aria-label="Describe your current mood"
           aria-describedby="mood-text-hint"
           className={[
             'w-full resize-none rounded-[20px] px-5 py-4 text-sm leading-relaxed',
-            'bg-surface-elevated text-text-primary placeholder:text-text-tertiary',
+            'bg-white/6 text-white placeholder:text-white/30',
             'border transition-all duration-200',
             'focus:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
             isFocused
-              ? 'border-primary shadow-[0_0_0_3px_rgba(0,123,255,0.2),0_0_20px_rgba(0,123,255,0.1)]'
-              : 'border-border-default hover:border-primary/40',
+              ? 'border-transparent'
+              : 'border-white/10 hover:border-white/20',
           ].join(' ')}
+          style={
+            isFocused
+              ? { boxShadow: '0 0 0 2px rgba(139,92,246,0.5), 0 8px 32px rgba(99,102,241,0.15)' }
+              : undefined
+          }
         />
       </motion.div>
 
@@ -129,7 +123,7 @@ export default function MoodTextInput({ value, onChange, disabled = false }: Moo
         id="mood-text-hint"
         className={[
           'mt-1.5 flex justify-end text-[11px] font-medium transition-colors',
-          isNearLimit ? 'text-[#fb923c]' : 'text-text-tertiary',
+          isNearLimit ? 'text-orange-400' : 'text-white/30',
         ].join(' ')}
         aria-live="polite"
       >

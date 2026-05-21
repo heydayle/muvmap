@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    typecheck: {
+      tsconfig: './tsconfig.test.json',
+    },
     include: ['**/*.test.{ts,tsx}'],
     /** CSS imports are irrelevant in unit tests — skip processing */
     css: false,

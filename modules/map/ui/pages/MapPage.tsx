@@ -111,7 +111,7 @@ export default function MapPage({
   const handleMarkerUpdate = useCallback((updated: MapMarkerData) => {
     setSelectedMarker(updated);
     // Also patch it in the mood markers list if it came from a mood search
-    // eslint-disable-next-line react-hooks/immutability
+
     setMoodMarkers((prev) =>
       prev
         ? prev.map((m) =>
@@ -132,7 +132,6 @@ export default function MapPage({
   useEffect(() => {
     const trimmed = searchText.trim();
     if (!trimmed) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchMarkers(null);
       return;
     }
@@ -263,7 +262,7 @@ export default function MapPage({
    */
   useEffect(() => {
     if (!moodQuery) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setMoodLoading(true);
     fetch('/api/mood-match', {
       method: 'POST',
@@ -327,7 +326,6 @@ export default function MapPage({
    * Also updates the URL so the result is shareable / reload-safe.
    */
   const searchMoodOnMap = useCallback(
-    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     async (input: MoodMatchInput) => {
       setIsSearching(true);
       setShowMoodPanel(false);
@@ -413,7 +411,7 @@ export default function MapPage({
    * Called after the user successfully saves a new location.
    * Adds it to the visible markers so it appears on map immediately.
    */
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+
   const handleLocationSaved = useCallback((newMarker: MapMarkerData) => {
     setPendingPin(null);
     // Append to moodMarkers if in mood mode, otherwise add to override list
@@ -435,7 +433,7 @@ export default function MapPage({
    */
   const handleMapReady = useCallback(
     (flyTo: (camera: { center: [number, number]; zoom: number }) => void) => {
-      flyToRef.current = flyTo;
+      flyToRef.current! = flyTo;
       if (initialSelectedMarker) {
         flyTo({
           center: initialSelectedMarker.lngLat,
@@ -617,7 +615,10 @@ export default function MapPage({
                   <span
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); onClearMood(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearMood();
+                    }}
                     onKeyDown={(e) =>
                       e.key === 'Enter' && (e.stopPropagation(), onClearMood())
                     }
@@ -639,7 +640,10 @@ export default function MapPage({
             </button>
 
             {/* ── Feed filter pills — inside the widget ── */}
-            <div className="border-t border-white/8 px-3 py-2" aria-label="Feed filter buttons">
+            <div
+              className="border-t border-white/8 px-3 py-2"
+              aria-label="Feed filter buttons"
+            >
               <TrendingFilters
                 activeFilter={feedFilter}
                 loading={feedLoading}
