@@ -34,7 +34,7 @@ describe('HomePage', () => {
   it('renders the MoodInputPanel mode toggle buttons', () => {
     render(<HomePage />);
     expect(
-      screen.getByRole('button', { name: /switch to text mood input/i }),
+      screen.getByRole('button', { name: /switch to describe mood input/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /switch to emoji mood input/i }),
